@@ -745,6 +745,9 @@ This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) 
 ## 👨‍💻 Authors
 
 - **Dagim** - *Lead Developer* - [@Dagim29](https://github.com/Dagim29)
+- **Eyob** - *Developer*
+- **Fitsum** - *Developer*
+- **Gebremeskel** - *Developer*
 
 ---
 

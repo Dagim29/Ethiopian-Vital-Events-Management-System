@@ -4,6 +4,8 @@ from datetime import datetime
 from bson import ObjectId
 import random
 import string
+from .audit_logs import create_audit_log
+from ..utils.validators import validate_request_data
 
 bp = Blueprint('deaths', __name__, url_prefix='/api/deaths')
 
@@ -57,11 +59,28 @@ def create_death_record():
         current_user_id = get_jwt_identity()
         data = request.get_json()
         
+        # Clean empty strings to None
+        for key, value in list(data.items()):
+            if value == '' or value == 'null':
+                data[key] = None
+        
+        print(f"DEBUG: Received death record data: {data}")
+        
         db = current_app.db  # Get db from current_app
         
         current_user = find_user_by_id(db, current_user_id)
         if not current_user:
             return jsonify({'error': 'User not found'}), 404
+        
+        # Validate data
+        is_valid, errors, warnings, quality_score = validate_request_data(db, 'death', data)
+        print(f"DEBUG: Validation result - Valid: {is_valid}, Errors: {errors}, Warnings: {warnings}")
+        if not is_valid:
+            return jsonify({
+                'success': False,
+                'errors': errors,
+                'warnings': warnings
+            }), 400
         
         certificate_number = CertificateGenerator.generate_certificate_number(
             'death', 
@@ -152,7 +171,9 @@ def create_death_record():
             'registered_by': current_user_id,
             'status': 'draft',
             'created_at': datetime.utcnow(),
-            'updated_at': datetime.utcnow()
+            'updated_at': datetime.utcnow(),
+            'data_quality_score': quality_score,
+            'validation_warnings': warnings if warnings else []
         }
         
         # Add Ethiopian date
@@ -164,10 +185,21 @@ def create_death_record():
                 pass
         
         result = db.death_records.insert_one(death_data)
+        death_id = str(result.inserted_id)
+        
+        # Create audit log
+        create_audit_log(
+            db=db,
+            user_id=current_user_id,
+            action='create',
+            record_type='death',
+            record_id=death_id,
+            details=f"Created death record for {data.get('deceased_first_name', 'Unknown')} {data.get('deceased_father_name', '')}"
+        )
         
         return jsonify({
             'message': 'Death record created successfully',
-            'death_id': str(result.inserted_id),
+            'death_id': death_id,
             'certificate_number': certificate_number
         }), 201
         
@@ -186,12 +218,77 @@ def get_death_records():
         if not current_user:
             return jsonify({'error': 'User not found'}), 404
         
-        filters = {}
-        if current_user['role'] in ['vms_officer', 'statistician']:
+        # Build filters based on user role
+        role_filter = None
+        if current_user['role'] not in ['admin', 'statistician']:
+            role_filters = {}
             if current_user.get('region'):
-                filters['death_region'] = current_user['region']
+                role_filters['death_region'] = current_user['region']
             if current_user.get('woreda'):
-                filters['death_woreda'] = current_user['woreda']
+                role_filters['death_woreda'] = current_user['woreda']
+            if role_filters:
+                role_filter = role_filters
+        
+        # Search functionality
+        search_query = request.args.get('search', '').strip()
+        search_filter = None
+        if search_query:
+            search_regex = {'$regex': f'.*{search_query}.*', '$options': 'i'}
+            search_filter = {
+                '$or': [
+                    {'certificate_number': search_regex},
+                    {'deceased_first_name': search_regex},
+                    {'deceased_father_name': search_regex},
+                    {'deceased_grandfather_name': search_regex}
+                ]
+            }
+        
+        # Additional filters
+        additional_filters = []
+        
+        # Gender filter
+        gender = request.args.get('gender', '').strip()
+        if gender:
+            additional_filters.append({'deceased_gender': gender})
+        
+        # Region filter
+        region = request.args.get('region', '').strip()
+        if region:
+            additional_filters.append({'death_region': region})
+        
+        # Status filter
+        status = request.args.get('status', '').strip()
+        if status:
+            additional_filters.append({'status': status})
+        
+        # Date range filter
+        date_from = request.args.get('date_from', '').strip()
+        date_to = request.args.get('date_to', '').strip()
+        if date_from or date_to:
+            date_filter = {}
+            if date_from:
+                date_filter['$gte'] = date_from
+            if date_to:
+                date_filter['$lte'] = date_to
+            if date_filter:
+                additional_filters.append({'date_of_death': date_filter})
+        
+        # Combine all filters
+        all_filters = []
+        if role_filter:
+            all_filters.append(role_filter)
+        if search_filter:
+            all_filters.append(search_filter)
+        if additional_filters:
+            all_filters.extend(additional_filters)
+        
+        # Build final filter
+        if len(all_filters) > 1:
+            filters = {'$and': all_filters}
+        elif len(all_filters) == 1:
+            filters = all_filters[0]
+        else:
+            filters = {}
         
         page = request.args.get('page', 1, type=int)
         per_page = request.args.get('per_page', 20, type=int)
@@ -244,19 +341,28 @@ def get_death_record(death_id):
         current_user_id = get_jwt_identity()
         current_user = find_user_by_id(db, current_user_id)
         
-        if current_user['role'] not in ['admin'] and death_record.get('death_region') != current_user.get('region'):
-            return jsonify({'error': 'Permission denied'}), 403
+        # Permission check: Allow if user is admin/statistician, created the record, or record is in their region
+        if current_user['role'] not in ['admin', 'statistician']:
+            # Check if user created this record OR if record is in their region
+            is_creator = death_record.get('registered_by') == ObjectId(current_user_id)
+            is_same_region = death_record.get('death_region') == current_user.get('region')
+            
+            if not (is_creator or is_same_region):
+                return jsonify({'error': 'Permission denied'}), 403
         
         registrar = find_user_by_id(db, death_record['registered_by']) if death_record.get('registered_by') else None
         approver = find_user_by_id(db, death_record['approved_by']) if death_record.get('approved_by') else None
         
-        record_data = {
-            'death_id': str(death_record['_id']),
-            'certificate_number': death_record['certificate_number'],
-            **death_record
-        }
+        # Convert ObjectIds to strings for JSON serialization
+        record_data = {}
+        for key, value in death_record.items():
+            if key == '_id':
+                record_data['death_id'] = str(value)
+            elif isinstance(value, ObjectId):
+                record_data[key] = str(value)
+            else:
+                record_data[key] = value
         
-        record_data.pop('_id', None)
         record_data['registered_by_name'] = registrar['full_name'] if registrar else None
         record_data['approved_by_name'] = approver['full_name'] if approver else None
         
@@ -278,14 +384,16 @@ def update_death_record(death_id):
             return jsonify({'error': 'Death record not found'}), 404
         
         # Check permissions
+        # VMS Officers and admins can edit all records
+        # Others can only edit their own records
         if death_record['registered_by'] != current_user_id:
             current_user = find_user_by_id(db, current_user_id)
-            if current_user['role'] != 'admin':
+            if current_user['role'] not in ['admin', 'vms_officer']:
                 return jsonify({'error': 'Permission denied'}), 403
         
         data = request.get_json()
         
-        # Update fields
+        # Update fields - Track only fields that actually changed
         updatable_fields = [
             'deceased_first_name', 'deceased_father_name', 'deceased_grandfather_name', 'deceased_gender',
             'date_of_birth', 'date_of_death', 'time_of_death', 'age_at_death', 'age_type',
@@ -296,13 +404,24 @@ def update_death_record(death_id):
             'usual_house_number', 'certifying_doctor', 'doctor_qualification', 'death_cause_verified',
             'medical_certificate_number', 'health_facility_name', 'informant_name', 'informant_relationship',
             'informant_id_number', 'informant_phone', 'informant_address', 'burial_date', 'burial_place',
-            'burial_region', 'burial_zone', 'burial_woreda', 'undertaker_name'
+            'burial_region', 'burial_zone', 'burial_woreda', 'undertaker_name', 'deceased_photo'
         ]
         
         update_data = {}
+        changed_fields_details = {}
+        
         for field in updatable_fields:
             if field in data:
-                update_data[field] = data[field]
+                old_value = death_record.get(field)
+                new_value = data[field]
+                
+                # Only include if value actually changed
+                if old_value != new_value:
+                    update_data[field] = new_value
+                    changed_fields_details[field] = {
+                        'old': old_value,
+                        'new': new_value
+                    }
         
         # Recalculate age if dates changed
         if 'date_of_birth' in data or 'date_of_death' in data:
@@ -320,18 +439,50 @@ def update_death_record(death_id):
                     pass
         
         # Update Ethiopian date if death date changed
-        if 'date_of_death' in data:
+        if 'date_of_death' in update_data:
             try:
                 gregorian_date = datetime.strptime(data['date_of_death'], '%Y-%m-%d').date()
                 update_data['ethiopian_date_of_death'] = CertificateGenerator.convert_to_ethiopian_date(gregorian_date)
             except:
                 pass
         
+        # If no fields changed, return early
+        if not update_data:
+            return jsonify({
+                'success': False,
+                'error': 'No changes detected'
+            }), 400
+        
         update_data['updated_at'] = datetime.utcnow()
         
-        db.death_records.update_one(
+        result = db.death_records.update_one(
             {'_id': ObjectId(death_id)},
             {'$set': update_data}
+        )
+        
+        if result.modified_count == 0:
+            return jsonify({
+                'success': False,
+                'error': 'No changes made'
+            }), 400
+        
+        # Create audit log with only changed fields
+        changed_field_names = [k for k in update_data.keys() if k != 'updated_at' and k != 'ethiopian_date_of_death']
+        
+        # Create a more readable details message
+        if len(changed_field_names) <= 3:
+            details = f"Updated: {', '.join(changed_field_names)}"
+        else:
+            details = f"Updated {len(changed_field_names)} fields: {', '.join(changed_field_names[:3])}, ..."
+        
+        create_audit_log(
+            db=db,
+            user_id=current_user_id,
+            action='update',
+            record_type='death',
+            record_id=death_id,
+            details=details,
+            changes=changed_fields_details
         )
         
         return jsonify({'message': 'Death record updated successfully'}), 200
@@ -360,6 +511,13 @@ def update_death_record_status(death_id):
             if current_user['role'] not in ['admin', 'vms_officer']:
                 return jsonify({'error': 'Only admin or VMS officer can approve records'}), 403
             update_data['approved_by'] = current_user_id
+            update_data['approved_at'] = datetime.utcnow()
+        
+        if new_status == 'rejected':
+            rejection_reason = data.get('rejection_reason', '')
+            update_data['rejection_reason'] = rejection_reason
+            update_data['rejected_by'] = current_user_id
+            update_data['rejected_at'] = datetime.utcnow()
         
         result = db.death_records.update_one(
             {'_id': ObjectId(death_id)},
@@ -369,7 +527,69 @@ def update_death_record_status(death_id):
         if result.modified_count == 0:
             return jsonify({'error': 'Death record not found'}), 404
         
+        # Create audit log
+        action = 'approve' if new_status == 'approved' else 'reject' if new_status == 'rejected' else 'status_change'
+        details = f"Changed status to {new_status}"
+        if new_status == 'rejected' and data.get('rejection_reason'):
+            details += f" - Reason: {data.get('rejection_reason')}"
+        
+        create_audit_log(
+            db=db,
+            user_id=current_user_id,
+            action=action,
+            record_type='death',
+            record_id=death_id,
+            details=details,
+            changes={'status': new_status}
+        )
+        
         return jsonify({'message': f'Death record status updated to {new_status}'}), 200
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@bp.route('/<string:death_id>', methods=['DELETE'])
+@jwt_required()
+def delete_death_record(death_id):
+    try:
+        current_user_id = get_jwt_identity()
+        
+        db = current_app.db
+        
+        death_record = db.death_records.find_one({'_id': ObjectId(death_id)})
+        if not death_record:
+            return jsonify({'error': 'Death record not found'}), 404
+        
+        # Check permissions - only admin can delete
+        current_user = find_user_by_id(db, current_user_id)
+        if not current_user:
+            return jsonify({'error': 'User not found'}), 404
+            
+        if current_user['role'] != 'admin':
+            return jsonify({'error': 'Only administrators can delete records'}), 403
+        
+        # Get record details before deletion for audit log
+        death_record = db.death_records.find_one({'_id': ObjectId(death_id)})
+        record_name = f"{death_record.get('deceased_first_name', 'Unknown')} {death_record.get('deceased_last_name', '')}"
+        
+        result = db.death_records.delete_one({'_id': ObjectId(death_id)})
+        
+        if result.deleted_count == 0:
+            return jsonify({'error': 'Death record not found'}), 404
+        
+        # Create audit log
+        create_audit_log(
+            db=db,
+            user_id=current_user_id,
+            action='delete',
+            record_type='death',
+            record_id=death_id,
+            details=f'Deleted death record: {record_name}',
+            changes={'deleted': True}
+        )
+        
+        return jsonify({'message': 'Death record deleted successfully'}), 200
         
     except Exception as e:
         return jsonify({'error': str(e)}), 500
