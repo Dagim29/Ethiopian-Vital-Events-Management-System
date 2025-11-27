@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Frontend API Debug</title>
+</head>
+<body>
+    <h1>Frontend API Debug</h1>
+    <button onclick="testLogin()">Test Login</button>
+    <button onclick="testBirthRecords()">Test Birth Records</button>
+    <div id="output"></div>
+
+    <script>
+        const API_BASE = 'http://localhost:5000/api';
+        let authToken = null;
+
+        async function testLogin() {
+            const output = document.getElementById('output');
+            output.innerHTML = '<p>Testing login...</p>';
+            
+            try {
+                const response = await fetch(`${API_BASE}/auth/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        email: 'admin@vms.et',
+                        password: 'admin123'
+                    })
+                });
+                
+                const data = await response.json();
+                console.log('Login response:', data);
+                
+                if (data.access_token) {
+                    authToken = data.access_token;
+                    localStorage.setItem('token', authToken);
+                    output.innerHTML = `<p>✅ Login successful! Token: ${authToken.substring(0, 20)}...</p>`;
+                } else {
+                    output.innerHTML = `<p>❌ Login failed: ${JSON.stringify(data)}</p>`;
+                }
+            } catch (error) {
+                output.innerHTML = `<p>❌ Login error: ${error.message}</p>`;
+            }
+        }
+
+        async function testBirthRecords() {
+            const output = document.getElementById('output');
+            
+            if (!authToken) {
+                authToken = localStorage.getItem('token');
+            }
+            
+            if (!authToken) {
+                output.innerHTML = '<p>❌ No auth token. Please login first.</p>';
+                return;
+            }
+            
+            output.innerHTML = '<p>Testing birth records...</p>';
+            
+            try {
+                const response = await fetch(`${API_BASE}/births`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                        'Content-Type': 'application/json',
+                    }
+                });
+                
+                console.log('Birth records response status:', response.status);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log('Birth records data:', data);
+                    output.innerHTML = `<p>✅ Birth records: ${JSON.stringify(data, null, 2)}</p>`;
+                } else {
+                    const errorText = await response.text();
+                    output.innerHTML = `<p>❌ Birth records failed (${response.status}): ${errorText}</p>`;
+                }
+            } catch (error) {
+                output.innerHTML = `<p>❌ Birth records error: ${error.message}</p>`;
+            }
+        }
+    </script>
+</body>
+</html>
