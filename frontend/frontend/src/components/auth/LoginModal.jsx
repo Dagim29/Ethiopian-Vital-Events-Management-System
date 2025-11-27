@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { XMarkIcon, EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
 import Button from '../common/Button';
 import Input from '../common/Input';
 
 const LoginModal = ({ isOpen, onClose, onSuccess, onSwitchToRegister }) => {
+  const { t } = useTranslation();
   const { login, loading, error, clearError } = useAuth();
   const [formData, setFormData] = useState({
     email: '',
@@ -36,13 +38,13 @@ const LoginModal = ({ isOpen, onClose, onSuccess, onSwitchToRegister }) => {
     const newErrors = {};
     
     if (!formData.email) {
-      newErrors.email = 'Email is required';
+      newErrors.email = t('auth.emailRequired');
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = 'Email is invalid';
+      newErrors.email = t('auth.emailInvalid');
     }
     
     if (!formData.password) {
-      newErrors.password = 'Password is required';
+      newErrors.password = t('auth.passwordRequired');
     }
     
     setErrors(newErrors);
@@ -99,10 +101,10 @@ const LoginModal = ({ isOpen, onClose, onSuccess, onSwitchToRegister }) => {
               <span className="text-2xl font-bold text-white">VMS</span>
             </div>
             <h2 className="text-2xl font-bold text-gray-900 mb-2">
-              Welcome Back
+              {t('auth.welcomeBack')}
             </h2>
             <p className="text-gray-600">
-              Sign in to your Vital Management System account
+              {t('auth.loginSubtitle')}
             </p>
           </div>
 
@@ -125,13 +127,13 @@ const LoginModal = ({ isOpen, onClose, onSuccess, onSwitchToRegister }) => {
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-6">
             <Input
-              label="Email Address"
+              label={t('auth.emailAddress')}
               name="email"
               type="email"
               value={formData.email}
               onChange={handleChange}
               error={errors.email}
-              placeholder="Enter your email"
+              placeholder={t('auth.enterEmail')}
               leftIcon={
                 <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" />
@@ -140,13 +142,13 @@ const LoginModal = ({ isOpen, onClose, onSuccess, onSwitchToRegister }) => {
             />
 
             <Input
-              label="Password"
+              label={t('auth.password')}
               name="password"
               type={showPassword ? 'text' : 'password'}
               value={formData.password}
               onChange={handleChange}
               error={errors.password}
-              placeholder="Enter your password"
+              placeholder={t('auth.enterPassword')}
               leftIcon={
                 <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
@@ -176,13 +178,13 @@ const LoginModal = ({ isOpen, onClose, onSuccess, onSwitchToRegister }) => {
                   className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
                 />
                 <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-700">
-                  Remember me
+                  {t('auth.rememberMe')}
                 </label>
               </div>
 
               <div className="text-sm">
                 <a href="#" className="font-medium text-primary-600 hover:text-primary-500">
-                  Forgot your password?
+                  {t('auth.forgotYourPassword')}
                 </a>
               </div>
             </div>
@@ -193,16 +195,16 @@ const LoginModal = ({ isOpen, onClose, onSuccess, onSwitchToRegister }) => {
               className="w-full"
               size="lg"
             >
-              {loading ? 'Signing in...' : 'Sign in'}
+              {loading ? t('auth.signingIn') : t('auth.loginButton')}
             </Button>
           </form>
 
           {/* Help Text */}
           <div className="mt-6 text-center">
             <p className="text-sm text-gray-600">
-              Need an account?{' '}
+              {t('auth.needAccount')}{' '}
               <span className="font-medium text-gray-700">
-                Contact your system administrator
+                {t('auth.contactAdmin')}
               </span>
             </p>
           </div>

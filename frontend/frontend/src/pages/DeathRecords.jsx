@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { PlusIcon, MagnifyingGlassIcon, EyeIcon, PencilIcon, TrashIcon, FunnelIcon, ArrowDownTrayIcon } from '@heroicons/react/24/outline';
 import { useAuth } from '../context/AuthContext';
+import { useTranslation } from 'react-i18next';
 import { deathRecordsAPI } from '../services/api';
 import Button from '../components/common/Button';
 import Input from '../components/common/Input';
@@ -13,6 +14,7 @@ import * as XLSX from 'xlsx';
 
 const DeathRecords = () => {
   const { user } = useAuth();
+  const { t } = useTranslation();
   const [records, setRecords] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -186,7 +188,7 @@ const DeathRecords = () => {
   const applyFilters = () => {
     fetchRecords();
     setShowFilters(false);
-    toast.success('Filters applied!');
+    toast.success(t('records.filtersApplied'));
   };
 
   const clearFilters = () => {
@@ -197,19 +199,27 @@ const DeathRecords = () => {
       region: '',
       gender: ''
     });
-    toast.info('Filters cleared!');
+    toast.info(t('records.filtersCleared'));
   };
 
   const getStatusBadge = (status) => {
     const statusStyles = {
       approved: 'badge-success',
       draft: 'badge-warning',
+      pending: 'badge-warning',
       rejected: 'badge-error',
+    };
+    
+    const statusLabels = {
+      approved: t('records.approved'),
+      draft: t('records.draft'),
+      pending: t('records.pending'),
+      rejected: t('records.rejected'),
     };
     
     return (
       <span className={`${statusStyles[status] || 'badge-info'}`}>
-        {status.charAt(0).toUpperCase() + status.slice(1)}
+        {statusLabels[status] || status}
       </span>
     );
   };
@@ -234,10 +244,10 @@ const DeathRecords = () => {
                 <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center mr-4 shadow-lg">
                   <span className="text-white font-bold text-xl">💀</span>
                 </div>
-                Death Records
+                {t('death.title')}
               </h1>
               <p className="text-red-100 mt-2 text-lg">
-                Manage death registration records • {totalRecords.toLocaleString()} total records
+                {t('death.manageRecords')} • {totalRecords.toLocaleString()} {t('death.totalRecords')}
               </p>
             </div>
             {user?.role !== 'statistician' && (
@@ -246,7 +256,7 @@ const DeathRecords = () => {
                 className="bg-white text-red-700 hover:bg-red-50 font-semibold px-6 py-3 rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200"
               >
                 <PlusIcon className="h-5 w-5 mr-2" />
-                Add Death Record
+                {t('death.addNewDeath')}
               </Button>
             )}
           </div>
@@ -261,7 +271,7 @@ const DeathRecords = () => {
               <div className="relative">
                 <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
                 <Input
-                  placeholder="Search by name, certificate number..."
+                  placeholder={t('death.searchPlaceholder')}
                   value={searchTerm}
                   onChange={handleSearch}
                   className="pl-10 w-full rounded-lg border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 text-base"
@@ -276,7 +286,7 @@ const DeathRecords = () => {
                 className="border-2 border-red-600 text-red-600 hover:bg-red-600 hover:text-white font-semibold px-4 py-2 rounded-lg transition-all duration-200"
               >
                 <FunnelIcon className="h-4 w-4 mr-1" />
-                Filter
+                {t('common.filter')}
               </Button>
               <Button 
                 onClick={handleExport}
@@ -285,7 +295,7 @@ const DeathRecords = () => {
                 className="border-2 border-green-600 text-green-600 hover:bg-green-600 hover:text-white font-semibold px-4 py-2 rounded-lg transition-all duration-200"
               >
                 <ArrowDownTrayIcon className="h-4 w-4 mr-1" />
-                Export
+                {t('common.export')}
               </Button>
             </div>
           </div>
@@ -294,57 +304,57 @@ const DeathRecords = () => {
         {/* Filter Panel */}
         {showFilters && (
           <Card className="bg-white rounded-2xl shadow-lg border border-gray-200 p-6 mb-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Filter Records</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">{t('death.filterRecords')}</h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Gender</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{t('death.gender')}</label>
                 <select
                   value={filters.gender}
                   onChange={(e) => setFilters({...filters, gender: e.target.value})}
                   className="w-full rounded-lg border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500"
                 >
-                  <option value="">All Genders</option>
-                  <option value="male">Male</option>
-                  <option value="female">Female</option>
+                  <option value="">{t('death.allGenders')}</option>
+                  <option value="male">{t('death.male')}</option>
+                  <option value="female">{t('death.female')}</option>
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Region</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{t('death.deathRegion')}</label>
                 <select
                   value={filters.region}
                   onChange={(e) => setFilters({...filters, region: e.target.value})}
                   className="w-full rounded-lg border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500"
                 >
-                  <option value="">All Regions</option>
-                  <option value="AD">Addis Ababa</option>
-                  <option value="AF">Afar</option>
-                  <option value="AM">Amhara</option>
-                  <option value="BG">Benishangul-Gumuz</option>
-                  <option value="DD">Dire Dawa</option>
-                  <option value="GM">Gambella</option>
-                  <option value="HR">Harari</option>
-                  <option value="OR">Oromia</option>
-                  <option value="SO">Somali</option>
-                  <option value="SN">Southern Nations</option>
-                  <option value="TG">Tigray</option>
+                  <option value="">{t('death.allRegions')}</option>
+                  <option value="AD">{t('death.addisAbaba')}</option>
+                  <option value="AF">{t('death.afar')}</option>
+                  <option value="AM">{t('death.amhara')}</option>
+                  <option value="BG">{t('death.benishangul')}</option>
+                  <option value="DD">{t('death.direDawa')}</option>
+                  <option value="GM">{t('death.gambella')}</option>
+                  <option value="HR">{t('death.harari')}</option>
+                  <option value="OR">{t('death.oromia')}</option>
+                  <option value="SO">{t('death.somali')}</option>
+                  <option value="SN">{t('death.southernNations')}</option>
+                  <option value="TG">{t('death.tigray')}</option>
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{t('records.status')}</label>
                 <select
                   value={filters.status}
                   onChange={(e) => setFilters({...filters, status: e.target.value})}
                   className="w-full rounded-lg border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500"
                 >
-                  <option value="">All Status</option>
-                  <option value="approved">Approved</option>
-                  <option value="pending">Pending</option>
-                  <option value="draft">Draft</option>
-                  <option value="rejected">Rejected</option>
+                  <option value="">{t('death.allStatus')}</option>
+                  <option value="approved">{t('records.approved')}</option>
+                  <option value="pending">{t('records.pending')}</option>
+                  <option value="draft">{t('death.draft')}</option>
+                  <option value="rejected">{t('records.rejected')}</option>
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Date From</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{t('death.dateFrom')}</label>
                 <input
                   type="date"
                   value={filters.dateFrom}
@@ -353,7 +363,7 @@ const DeathRecords = () => {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Date To</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{t('death.dateTo')}</label>
                 <input
                   type="date"
                   value={filters.dateTo}
@@ -367,14 +377,14 @@ const DeathRecords = () => {
                 onClick={applyFilters}
                 className="bg-red-600 text-white hover:bg-red-700 px-6 py-2 rounded-lg"
               >
-                Apply Filters
+                {t('death.applyFilters')}
               </Button>
               <Button
                 onClick={clearFilters}
                 variant="outline"
                 className="border-gray-300 text-gray-700 hover:bg-gray-50 px-6 py-2 rounded-lg"
               >
-                Clear Filters
+                {t('death.clearFilters')}
               </Button>
             </div>
           </Card>
@@ -385,7 +395,7 @@ const DeathRecords = () => {
           {loading ? (
             <div className="flex flex-col items-center justify-center py-16">
               <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-red-600"></div>
-              <p className="mt-4 text-gray-600 font-medium">Loading records...</p>
+              <p className="mt-4 text-gray-600 font-medium">{t('common.loading')}</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -393,25 +403,25 @@ const DeathRecords = () => {
                 <thead className="bg-gradient-to-r from-gray-50 to-gray-100">
                   <tr>
                     <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
-                      Certificate #
+                      {t('death.certificateNumber')}
                     </th>
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Deceased Name
+                      {t('death.deceasedName')}
                     </th>
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Date of Death
+                      {t('death.dateOfDeath')}
                     </th>
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Age at Death
+                      {t('death.age')}
                     </th>
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Cause of Death
+                      {t('death.causeOfDeath')}
                     </th>
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Status
+                      {t('records.status')}
                     </th>
                     <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Actions
+                      {t('records.actions')}
                     </th>
                   </tr>
                 </thead>
@@ -423,14 +433,14 @@ const DeathRecords = () => {
                           <div className="w-20 h-20 bg-gradient-to-br from-red-100 to-red-200 rounded-full flex items-center justify-center mb-4 shadow-md">
                             <span className="text-4xl">💀</span>
                           </div>
-                          <p className="text-xl font-bold text-gray-900 mb-2">No death records found</p>
+                          <p className="text-xl font-bold text-gray-900 mb-2">{t('records.noRecordsFound')}</p>
                           <p className="text-sm text-gray-500 mb-4">
-                            {user?.role === 'statistician' ? 'No records available in the database' : 'Start by adding a new death record'}
+                            {user?.role === 'statistician' ? t('death.noRecordsAvailable') : t('death.startByAdding')}
                           </p>
                           {user?.role !== 'statistician' && (
                             <Button onClick={handleAddRecord} className="bg-red-600 hover:bg-red-700 text-white font-semibold px-6 py-2 rounded-lg shadow-md">
                               <PlusIcon className="h-5 w-5 mr-2 inline" />
-                              Add First Record
+                              {t('death.addFirstRecord')}
                             </Button>
                           )}
                         </div>
@@ -451,7 +461,7 @@ const DeathRecords = () => {
                           {formatDate(record.date_of_death)}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-gray-700">
-                          {record.age_at_death ? `${record.age_at_death} years` : 'N/A'}
+                          {record.age_at_death ? `${record.age_at_death} ${t('death.years')}` : 'N/A'}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-gray-700">
                           {record.cause_of_death || 'N/A'}
@@ -506,7 +516,7 @@ const DeathRecords = () => {
                     disabled={currentPage === 1}
                     onClick={() => setCurrentPage(currentPage - 1)}
                   >
-                    Previous
+                    {t('common.previous')}
                   </Button>
                   <Button
                     variant="outline"
@@ -514,13 +524,13 @@ const DeathRecords = () => {
                     disabled={currentPage === totalPages}
                     onClick={() => setCurrentPage(currentPage + 1)}
                   >
-                    Next
+                    {t('common.next')}
                   </Button>
                 </div>
                 <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
                   <div>
                     <p className="text-sm text-gray-700">
-                      Showing page <span className="font-medium">{currentPage}</span> of{' '}
+                      {t('death.showingPage')} <span className="font-medium">{currentPage}</span> {t('records.of')}{' '}
                       <span className="font-medium">{totalPages}</span>
                     </p>
                   </div>
@@ -532,7 +542,7 @@ const DeathRecords = () => {
                         disabled={currentPage === 1}
                         onClick={() => setCurrentPage(currentPage - 1)}
                       >
-                        Previous
+                        {t('common.previous')}
                       </Button>
                       <Button
                         variant="outline"
@@ -541,7 +551,7 @@ const DeathRecords = () => {
                         onClick={() => setCurrentPage(currentPage + 1)}
                         className="ml-2"
                       >
-                        Next
+                        {t('common.next')}
                       </Button>
                     </nav>
                   </div>

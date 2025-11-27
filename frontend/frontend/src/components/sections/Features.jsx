@@ -1,4 +1,3 @@
-import React from 'react';
 import { 
   DocumentTextIcon, 
   UserGroupIcon, 
@@ -7,53 +6,56 @@ import {
   GlobeAltIcon,
   ClockIcon
 } from '@heroicons/react/24/outline';
+import { useTranslation } from 'react-i18next';
 
 const Features = () => {
+  const { t } = useTranslation();
+  
   const features = [
     {
       icon: DocumentTextIcon,
-      title: '4 Record Types',
-      description: 'Manage births, deaths, marriages, and divorces with digital forms, photo uploads, and PDF certificate generation.',
+      title: t('landing.features.feature1Title'),
+      description: t('landing.features.feature1Description'),
       color: 'from-primary-500 to-primary-600',
       bgColor: 'bg-primary-50',
       textColor: 'text-primary-600'
     },
     {
       icon: UserGroupIcon,
-      title: 'Role-Based Access',
-      description: 'Five user roles: Admin, VMS Officer, Clerk, Statistician, and Officer with specific permissions and workflows.',
+      title: t('landing.features.feature2Title'),
+      description: t('landing.features.feature2Description'),
       color: 'from-success-500 to-success-600',
       bgColor: 'bg-success-50',
       textColor: 'text-success-600'
     },
     {
       icon: ShieldCheckIcon,
-      title: 'Approval Workflow',
-      description: 'Multi-level approval system with draft, submitted, approved, and rejected statuses for quality control.',
+      title: t('landing.features.feature3Title'),
+      description: t('landing.features.feature3Description'),
       color: 'from-danger-500 to-danger-600',
       bgColor: 'bg-danger-50',
       textColor: 'text-danger-600'
     },
     {
       icon: ChartBarIcon,
-      title: 'Statistics Dashboard',
-      description: 'Real-time analytics with Excel export, regional breakdowns, and trend analysis for data-driven insights.',
+      title: t('landing.features.feature4Title'),
+      description: t('landing.features.feature4Description'),
       color: 'from-warning-500 to-warning-600',
       bgColor: 'bg-warning-50',
       textColor: 'text-warning-600'
     },
     {
       icon: GlobeAltIcon,
-      title: 'Regional Management',
-      description: 'Region, zone, woreda, and kebele filtering with location-based access control for all 11 Ethiopian regions.',
+      title: t('landing.features.feature5Title'),
+      description: t('landing.features.feature5Description'),
       color: 'from-green-500 to-green-600',
       bgColor: 'bg-green-50',
       textColor: 'text-green-600'
     },
     {
       icon: ClockIcon,
-      title: 'Search & Filter',
-      description: 'Advanced search by name, ID, date range, status, and location with pagination and sorting capabilities.',
+      title: t('landing.features.feature6Title'),
+      description: t('landing.features.feature6Description'),
       color: 'from-purple-500 to-purple-600',
       bgColor: 'bg-purple-50',
       textColor: 'text-purple-600'
@@ -66,14 +68,13 @@ const Features = () => {
         {/* Section Header */}
         <div className="text-center mb-16">
           <h2 className="text-4xl font-bold text-gray-900 mb-4">
-            Powerful Features for
+            {t('landing.features.sectionTitle1')}
             <span className="block bg-gradient-to-r from-green-600 via-blue-600 to-green-700 bg-clip-text text-transparent">
-              Modern Governance
+              {t('landing.features.sectionTitle2')}
             </span>
           </h2>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            Built with React and Flask, VMS provides a complete solution for civil registration 
-            with modern UI, secure authentication, and comprehensive record management.
+            {t('landing.features.sectionDescription')}
           </p>
         </div>
 
@@ -107,18 +108,17 @@ const Features = () => {
         <div className="text-center mt-16">
           <div className="bg-gradient-to-r from-green-50 via-blue-50/30 to-green-50 rounded-2xl p-8 border-2 border-green-200">
             <h3 className="text-2xl font-bold text-gray-900 mb-4">
-              Comprehensive Civil Registration System
+              {t('landing.features.ctaTitle')}
             </h3>
             <p className="text-gray-600 mb-6 max-w-2xl mx-auto">
-              From data entry by clerks to approval by VMS officers, certificate generation, 
-              and statistical analysis - VMS handles the complete vital records lifecycle.
+              {t('landing.features.ctaDescription')}
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <button className="bg-gradient-to-r from-green-600 to-green-700 text-white px-8 py-3 rounded-lg font-semibold hover:from-green-700 hover:to-green-800 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200">
-                Request Access
+                {t('landing.features.requestAccess')}
               </button>
               <button className="border-2 border-green-600 text-green-700 px-8 py-3 rounded-lg font-semibold hover:bg-green-600 hover:text-white transition-all duration-200">
-                View Documentation
+                {t('landing.features.viewDocs')}
               </button>
             </div>
           </div>

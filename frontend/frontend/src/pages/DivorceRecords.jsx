@@ -10,9 +10,11 @@ import ViewDivorceRecord from '../components/divorce/ViewDivorceRecord';
 import { format } from 'date-fns';
 import { toast } from 'react-toastify';
 import * as XLSX from 'xlsx';
+import { useTranslation } from 'react-i18next';
 
 const DivorceRecords = () => {
   const { user } = useAuth();
+  const { t } = useTranslation();
   const [records, setRecords] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -67,8 +69,8 @@ const DivorceRecords = () => {
         
         if (response.divorce_records.length === 0) {
           const noRecordsMessage = searchTerm 
-            ? 'No divorce records found matching your search criteria.'
-            : 'No divorce records found in the database.';
+            ? t('divorce.noRecordsFound')
+            : t('divorce.noRecordsAvailable');
           
           if (currentPage === 1) {
             toast.info(noRecordsMessage, { autoClose: 3000 });
@@ -87,7 +89,7 @@ const DivorceRecords = () => {
         status: error.response?.status
       });
       
-      const errorMessage = error.response?.data?.message || 'Failed to load divorce records. Please try again.';
+      const errorMessage = error.response?.data?.message || t('divorce.failedToLoad');
       toast.error(errorMessage);
       
       setRecords([]);
@@ -99,14 +101,14 @@ const DivorceRecords = () => {
   };
 
   const handleDeleteRecord = async (id) => {
-    if (window.confirm('Are you sure you want to delete this record? This action cannot be undone.')) {
+    if (window.confirm(t('divorce.deleteConfirm'))) {
       try {
         await divorceRecordsAPI.deleteRecord(id);
-        toast.success('Record deleted successfully');
+        toast.success(t('divorce.recordDeleted'));
         fetchRecords();
       } catch (error) {
         console.error('Error deleting record:', error);
-        toast.error('Failed to delete record');
+        toast.error(t('divorce.failedToDelete'));
       }
     }
   };
@@ -125,7 +127,7 @@ const DivorceRecords = () => {
       setIsViewOpen(true);
     } catch (error) {
       console.error('Error fetching record details:', error);
-      toast.error('Failed to load record details');
+      toast.error(t('divorce.failedToLoadDetails'));
     }
   };
 
@@ -137,7 +139,7 @@ const DivorceRecords = () => {
       setIsFormOpen(true);
     } catch (error) {
       console.error('Error fetching record details:', error);
-      toast.error('Failed to load record details');
+      toast.error(t('divorce.failedToLoadDetails'));
       // Fallback to using the record from the list
       setSelectedRecord(record);
       setIsFormOpen(true);
@@ -157,38 +159,38 @@ const DivorceRecords = () => {
   const handleExport = () => {
     try {
       const exportData = records.map(record => ({
-        'Certificate Number': record.certificate_number || 'N/A',
-        'Husband Name': record.husband_full_name || 'N/A',
-        'Wife Name': record.wife_full_name || 'N/A',
-        'Divorce Date': record.divorce_date || 'N/A',
-        'Divorce Type': record.divorce_type || 'N/A',
-        'Court Name': record.court_name || 'N/A',
-        'Case Number': record.divorce_case_number || 'N/A',
-        'Region': record.divorce_region || 'N/A',
-        'Zone': record.divorce_zone || 'N/A',
-        'Woreda': record.divorce_woreda || 'N/A',
-        'Registration Date': record.registration_date ? format(new Date(record.registration_date), 'MMM dd, yyyy') : 'N/A',
-        'Registered By': record.registered_by_name || 'N/A',
-        'Status': record.status || 'N/A'
+        [t('divorce.certificateNumber')]: record.certificate_number || 'N/A',
+        [t('divorce.spouse1')]: record.spouse1_full_name || 'N/A',
+        [t('divorce.spouse2')]: record.spouse2_full_name || 'N/A',
+        [t('divorce.divorceDate')]: record.divorce_date || 'N/A',
+        [t('divorce.divorceType')]: record.divorce_type || 'N/A',
+        [t('divorce.courtName')]: record.court_name || 'N/A',
+        [t('divorce.caseNumber')]: record.divorce_case_number || 'N/A',
+        [t('divorce.region')]: record.divorce_region || 'N/A',
+        [t('divorce.zone')]: record.divorce_zone || 'N/A',
+        [t('divorce.woreda')]: record.divorce_woreda || 'N/A',
+        [t('common.registrationDate')]: record.registration_date ? format(new Date(record.registration_date), 'MMM dd, yyyy') : 'N/A',
+        [t('common.registeredBy')]: record.registered_by_name || 'N/A',
+        [t('records.status')]: record.status || 'N/A'
       }));
 
       const ws = XLSX.utils.json_to_sheet(exportData);
       const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, 'Divorce Records');
+      XLSX.utils.book_append_sheet(wb, ws, t('divorce.title'));
       const filename = `Divorce_Records_${format(new Date(), 'yyyy-MM-dd')}.xlsx`;
       XLSX.writeFile(wb, filename);
       
-      toast.success(`Exported ${exportData.length} records successfully!`);
+      toast.success(t('divorce.exportSuccess', { count: exportData.length }));
     } catch (error) {
       console.error('Error exporting records:', error);
-      toast.error('Failed to export records. Please try again.');
+      toast.error(t('divorce.exportFailed'));
     }
   };
 
   const applyFilters = () => {
     fetchRecords();
     setShowFilters(false);
-    toast.success('Filters applied!');
+    toast.success(t('divorce.filtersApplied'));
   };
 
   const clearFilters = () => {
@@ -198,19 +200,27 @@ const DivorceRecords = () => {
       dateTo: '',
       region: ''
     });
-    toast.info('Filters cleared!');
+    toast.info(t('divorce.filtersCleared'));
   };
 
   const getStatusBadge = (status) => {
     const statusStyles = {
       approved: 'badge-success',
       draft: 'badge-warning',
+      pending: 'badge-warning',
       rejected: 'badge-error',
+    };
+    
+    const statusLabels = {
+      approved: t('records.approved'),
+      draft: t('records.draft'),
+      pending: t('records.pending'),
+      rejected: t('records.rejected'),
     };
     
     return (
       <span className={`${statusStyles[status] || 'badge-info'}`}>
-        {status.charAt(0).toUpperCase() + status.slice(1)}
+        {statusLabels[status] || status}
       </span>
     );
   };
@@ -239,10 +249,10 @@ const DivorceRecords = () => {
                 <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center mr-4 shadow-lg">
                   <span className="text-white font-bold text-xl">⚖️</span>
                 </div>
-                Divorce Records
+                {t('divorce.title')}
               </h1>
               <p className="text-orange-100 mt-2 text-lg">
-                Manage divorce registration records • {totalRecords.toLocaleString()} total records
+                {t('divorce.manageRecords')} • {totalRecords.toLocaleString()} {t('divorce.totalRecords')}
               </p>
             </div>
             {user?.role !== 'statistician' && (
@@ -251,7 +261,7 @@ const DivorceRecords = () => {
                 className="bg-white text-orange-700 hover:bg-orange-50 font-semibold px-6 py-3 rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200"
               >
                 <PlusIcon className="h-5 w-5 mr-2" />
-                Add Divorce Record
+                {t('divorce.addDivorceRecord')}
               </Button>
             )}
           </div>
@@ -266,7 +276,7 @@ const DivorceRecords = () => {
               <div className="relative">
                 <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
                 <Input
-                  placeholder="Search by name, certificate number..."
+                  placeholder={t('divorce.searchPlaceholder')}
                   value={searchTerm}
                   onChange={handleSearch}
                   className="pl-10 w-full rounded-lg border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500 text-base"
@@ -281,7 +291,7 @@ const DivorceRecords = () => {
                 className="border-2 border-orange-600 text-orange-600 hover:bg-orange-600 hover:text-white font-semibold px-4 py-2 rounded-lg transition-all duration-200"
               >
                 <FunnelIcon className="h-4 w-4 mr-1" />
-                Filter
+                {t('divorce.filter')}
               </Button>
               <Button 
                 onClick={handleExport}
@@ -290,7 +300,7 @@ const DivorceRecords = () => {
                 className="border-2 border-green-600 text-green-600 hover:bg-green-600 hover:text-white font-semibold px-4 py-2 rounded-lg transition-all duration-200"
               >
                 <ArrowDownTrayIcon className="h-4 w-4 mr-1" />
-                Export
+                {t('divorce.export')}
               </Button>
             </div>
           </div>
@@ -299,45 +309,45 @@ const DivorceRecords = () => {
         {/* Filter Panel */}
         {showFilters && (
           <Card className="bg-white rounded-2xl shadow-lg border border-gray-200 p-6 mb-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Filter Records</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">{t('divorce.filterRecords')}</h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Region</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{t('divorce.region')}</label>
                 <select
                   value={filters.region}
                   onChange={(e) => setFilters({...filters, region: e.target.value})}
                   className="w-full rounded-lg border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500"
                 >
-                  <option value="">All Regions</option>
-                  <option value="AD">Addis Ababa</option>
-                  <option value="AF">Afar</option>
-                  <option value="AM">Amhara</option>
-                  <option value="BG">Benishangul-Gumuz</option>
-                  <option value="DD">Dire Dawa</option>
-                  <option value="GM">Gambella</option>
-                  <option value="HR">Harari</option>
-                  <option value="OR">Oromia</option>
-                  <option value="SO">Somali</option>
-                  <option value="SN">Southern Nations</option>
-                  <option value="TG">Tigray</option>
+                  <option value="">{t('divorce.allRegions')}</option>
+                  <option value="AD">{t('divorce.addisAbaba')}</option>
+                  <option value="AF">{t('divorce.afar')}</option>
+                  <option value="AM">{t('divorce.amhara')}</option>
+                  <option value="BG">{t('divorce.benishangul')}</option>
+                  <option value="DD">{t('divorce.direDawa')}</option>
+                  <option value="GM">{t('divorce.gambella')}</option>
+                  <option value="HR">{t('divorce.harari')}</option>
+                  <option value="OR">{t('divorce.oromia')}</option>
+                  <option value="SO">{t('divorce.somali')}</option>
+                  <option value="SN">{t('divorce.southernNations')}</option>
+                  <option value="TG">{t('divorce.tigray')}</option>
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{t('records.status')}</label>
                 <select
                   value={filters.status}
                   onChange={(e) => setFilters({...filters, status: e.target.value})}
                   className="w-full rounded-lg border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500"
                 >
-                  <option value="">All Status</option>
-                  <option value="approved">Approved</option>
-                  <option value="pending">Pending</option>
-                  <option value="draft">Draft</option>
-                  <option value="rejected">Rejected</option>
+                  <option value="">{t('divorce.allStatus')}</option>
+                  <option value="approved">{t('common.approved')}</option>
+                  <option value="pending">{t('common.pending')}</option>
+                  <option value="draft">{t('divorce.draft')}</option>
+                  <option value="rejected">{t('common.rejected')}</option>
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Date From</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{t('divorce.dateFrom')}</label>
                 <input
                   type="date"
                   value={filters.dateFrom}
@@ -346,7 +356,7 @@ const DivorceRecords = () => {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Date To</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{t('divorce.dateTo')}</label>
                 <input
                   type="date"
                   value={filters.dateTo}
@@ -360,14 +370,14 @@ const DivorceRecords = () => {
                 onClick={applyFilters}
                 className="bg-orange-600 text-white hover:bg-orange-700 px-6 py-2 rounded-lg"
               >
-                Apply Filters
+                {t('divorce.applyFilters')}
               </Button>
               <Button
                 onClick={clearFilters}
                 variant="outline"
                 className="border-gray-300 text-gray-700 hover:bg-gray-50 px-6 py-2 rounded-lg"
               >
-                Clear Filters
+                {t('divorce.clearFilters')}
               </Button>
             </div>
           </Card>
@@ -378,7 +388,7 @@ const DivorceRecords = () => {
           {loading ? (
             <div className="flex flex-col items-center justify-center py-16">
               <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-orange-600"></div>
-              <p className="mt-4 text-gray-600 font-medium">Loading records...</p>
+              <p className="mt-4 text-gray-600 font-medium">{t('divorce.loadingRecords')}</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -386,25 +396,25 @@ const DivorceRecords = () => {
                 <thead className="bg-gradient-to-r from-gray-50 to-gray-100">
                   <tr>
                     <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
-                      Certificate #
+                      {t('divorce.certificateNumber')}
                     </th>
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Spouse 1
+                      {t('divorce.spouse1')}
                     </th>
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Spouse 2
+                      {t('divorce.spouse2')}
                     </th>
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Divorce Date
+                      {t('divorce.divorceDate')}
                     </th>
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Court
+                      {t('divorce.court')}
                     </th>
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Status
+                      {t('records.status')}
                     </th>
                     <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Actions
+                      {t('divorce.actions')}
                     </th>
                   </tr>
                 </thead>
@@ -416,14 +426,14 @@ const DivorceRecords = () => {
                           <div className="w-20 h-20 bg-gradient-to-br from-orange-100 to-orange-200 rounded-full flex items-center justify-center mb-4 shadow-md">
                             <span className="text-4xl">⚖️</span>
                           </div>
-                          <p className="text-xl font-bold text-gray-900 mb-2">No divorce records found</p>
+                          <p className="text-xl font-bold text-gray-900 mb-2">{t('divorce.noRecordsFound')}</p>
                           <p className="text-sm text-gray-500 mb-4">
-                            {user?.role === 'statistician' ? 'No records available in the database' : 'Start by adding a new divorce record'}
+                            {user?.role === 'statistician' ? t('divorce.noRecordsAvailable') : t('divorce.startByAdding')}
                           </p>
                           {user?.role !== 'statistician' && (
                             <Button onClick={handleAddRecord} className="bg-orange-600 hover:bg-orange-700 text-white font-semibold px-6 py-2 rounded-lg shadow-md">
                               <PlusIcon className="h-5 w-5 mr-2 inline" />
-                              Add First Record
+                              {t('divorce.addFirstRecord')}
                             </Button>
                           )}
                         </div>
@@ -499,7 +509,7 @@ const DivorceRecords = () => {
                     disabled={currentPage === 1}
                     onClick={() => setCurrentPage(currentPage - 1)}
                   >
-                    Previous
+                    {t('common.previous')}
                   </Button>
                   <Button
                     variant="outline"
@@ -507,13 +517,13 @@ const DivorceRecords = () => {
                     disabled={currentPage === totalPages}
                     onClick={() => setCurrentPage(currentPage + 1)}
                   >
-                    Next
+                    {t('common.next')}
                   </Button>
                 </div>
                 <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
                   <div>
                     <p className="text-sm text-gray-700">
-                      Showing page <span className="font-medium">{currentPage}</span> of{' '}
+                      {t('divorce.showingPage')} <span className="font-medium">{currentPage}</span> {t('records.of')}{' '}
                       <span className="font-medium">{totalPages}</span>
                     </p>
                   </div>
@@ -525,7 +535,7 @@ const DivorceRecords = () => {
                         disabled={currentPage === 1}
                         onClick={() => setCurrentPage(currentPage - 1)}
                       >
-                        Previous
+                        {t('common.previous')}
                       </Button>
                       <Button
                         variant="outline"
@@ -534,7 +544,7 @@ const DivorceRecords = () => {
                         onClick={() => setCurrentPage(currentPage + 1)}
                         className="ml-2"
                       >
-                        Next
+                        {t('common.next')}
                       </Button>
                     </nav>
                   </div>

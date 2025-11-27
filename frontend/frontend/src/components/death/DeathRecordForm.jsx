@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { deathRecordsAPI } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
+import { useTranslation } from 'react-i18next';
 import Button from '../common/Button';
 import Input from '../common/Input';
 import Modal from '../common/Modal';
@@ -93,12 +94,18 @@ const SelectField = ({ label, name, options, register, errors, required = false 
 
 const DeathRecordForm = ({ isOpen, onClose, record = null, onSuccess }) => {
   const { user } = useAuth();
+  const { t } = useTranslation();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeTab, setActiveTab] = useState('deceased');
+  const [calculatedAge, setCalculatedAge] = useState({ value: '', type: 'years' });
   
-  const { register, handleSubmit, reset, watch, formState: { errors } } = useForm({
+  const { register, handleSubmit, reset, watch, setValue, formState: { errors } } = useForm({
     defaultValues: record || {}
   });
+
+  // Watch date fields for automatic age calculation
+  const dateOfBirth = watch('date_of_birth');
+  const dateOfDeath = watch('date_of_death');
 
   useEffect(() => {
     if (record) {
@@ -115,6 +122,52 @@ const DeathRecordForm = ({ isOpen, onClose, record = null, onSuccess }) => {
       reset(formattedRecord);
     }
   }, [record, reset]);
+
+  // Calculate age automatically when dates change
+  useEffect(() => {
+    if (dateOfBirth && dateOfDeath) {
+      const birth = new Date(dateOfBirth);
+      const death = new Date(dateOfDeath);
+      
+      if (death >= birth) {
+        const diffTime = Math.abs(death - birth);
+        const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+        
+        let ageValue, ageType;
+        
+        if (diffDays < 1) {
+          // Less than 1 day - calculate hours
+          const diffHours = Math.floor(diffTime / (1000 * 60 * 60));
+          ageValue = diffHours;
+          ageType = 'hours';
+        } else if (diffDays < 30) {
+          // Less than 30 days
+          ageValue = diffDays;
+          ageType = 'days';
+        } else if (diffDays < 365) {
+          // Less than 1 year - calculate months
+          const months = Math.floor(diffDays / 30);
+          ageValue = months;
+          ageType = 'months';
+        } else {
+          // Calculate years
+          let years = death.getFullYear() - birth.getFullYear();
+          const monthDiff = death.getMonth() - birth.getMonth();
+          
+          if (monthDiff < 0 || (monthDiff === 0 && death.getDate() < birth.getDate())) {
+            years--;
+          }
+          
+          ageValue = years;
+          ageType = 'years';
+        }
+        
+        setCalculatedAge({ value: ageValue, type: ageType });
+        setValue('age_at_death', ageValue);
+        setValue('age_type', ageType);
+      }
+    }
+  }, [dateOfBirth, dateOfDeath, setValue]);
 
   const onSubmit = async (data) => {
     try {
@@ -148,20 +201,79 @@ const DeathRecordForm = ({ isOpen, onClose, record = null, onSuccess }) => {
 
   if (!isOpen) return null;
 
+  const GENDER_OPTIONS_TRANSLATED = [
+    { value: 'male', label: t('death.male') },
+    { value: 'female', label: t('death.female') },
+  ];
+
+  const AGE_TYPE_OPTIONS_TRANSLATED = [
+    { value: 'years', label: t('death.ageYears') },
+    { value: 'months', label: t('death.ageMonths') },
+    { value: 'days', label: t('death.ageDays') },
+    { value: 'hours', label: t('death.ageHours') },
+  ];
+
+  const PLACE_OF_DEATH_OPTIONS_TRANSLATED = [
+    { value: 'hospital', label: t('death.hospital') },
+    { value: 'home', label: t('death.home') },
+    { value: 'road', label: t('death.road') },
+    { value: 'workplace', label: t('death.workplace') },
+    { value: 'other', label: t('death.other') },
+  ];
+
+  const CAUSE_TYPE_OPTIONS_TRANSLATED = [
+    { value: 'natural', label: t('death.natural') },
+    { value: 'accident', label: t('death.accident') },
+    { value: 'homicide', label: t('death.homicide') },
+    { value: 'suicide', label: t('death.suicide') },
+    { value: 'pending', label: t('death.pendingInvestigation') },
+    { value: 'unknown', label: t('death.unknown') },
+  ];
+
+  const MARITAL_STATUS_OPTIONS_TRANSLATED = [
+    { value: 'single', label: t('death.single') },
+    { value: 'married', label: t('death.married') },
+    { value: 'divorced', label: t('death.divorced') },
+    { value: 'widowed', label: t('death.widowed') },
+  ];
+
+  const EDUCATION_OPTIONS_TRANSLATED = [
+    { value: 'none', label: t('death.educationNone') },
+    { value: 'primary', label: t('death.educationPrimary') },
+    { value: 'secondary', label: t('death.educationSecondary') },
+    { value: 'tertiary', label: t('death.educationTertiary') },
+    { value: 'university', label: t('death.educationUniversity') },
+  ];
+
+  const ETHIOPIAN_REGIONS_TRANSLATED = [
+    { value: 'AD', label: t('death.addisAbaba') },
+    { value: 'AA', label: t('death.afar') },
+    { value: 'AM', label: t('death.amhara') },
+    { value: 'BG', label: t('death.benishangul') },
+    { value: 'DD', label: t('death.direDawa') },
+    { value: 'GA', label: t('death.gambella') },
+    { value: 'HA', label: t('death.harari') },
+    { value: 'OR', label: t('death.oromia') },
+    { value: 'SI', label: t('death.sidama') },
+    { value: 'SO', label: t('death.somali') },
+    { value: 'SN', label: t('death.southernNations') },
+    { value: 'TI', label: t('death.tigray') },
+  ];
+
   const tabs = [
-    { id: 'deceased', label: 'Deceased Info', icon: '👤' },
-    { id: 'death', label: 'Death Details', icon: '📋' },
-    { id: 'location', label: 'Location', icon: '📍' },
-    { id: 'informant', label: 'Informant', icon: '👥' },
-    { id: 'medical', label: 'Medical', icon: '⚕️' },
-    { id: 'burial', label: 'Burial', icon: '⚰️' },
+    { id: 'deceased', label: t('death.deceasedInfo'), icon: '👤' },
+    { id: 'death', label: t('death.deathDetails'), icon: '📋' },
+    { id: 'location', label: t('death.location'), icon: '📍' },
+    { id: 'informant', label: t('death.informantInfo'), icon: '👥' },
+    { id: 'medical', label: t('death.medicalInfo'), icon: '⚕️' },
+    { id: 'burial', label: t('death.burialInfo'), icon: '⚰️' },
   ];
 
   return (
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={record ? 'Edit Death Record' : 'Register New Death Record'}
+      title={record ? t('death.editDeath') : t('death.registerNewDeath')}
       maxWidth="max-w-6xl"
     >
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
@@ -191,63 +303,63 @@ const DeathRecordForm = ({ isOpen, onClose, record = null, onSuccess }) => {
           {activeTab === 'deceased' && (
             <div className="space-y-6">
               <div className="bg-red-50 p-6 rounded-lg border border-red-200">
-                <h3 className="text-lg font-semibold mb-4 text-red-800">Personal Information</h3>
+                <h3 className="text-lg font-semibold mb-4 text-red-800">{t('death.personalInformation')}</h3>
                 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <Input
-                    label="First Name"
-                    {...register('deceased_first_name', { required: 'First name is required' })}
+                    label={t('death.firstName')}
+                    {...register('deceased_first_name', { required: t('death.firstNameRequired') })}
                     error={errors.deceased_first_name}
                     required
                   />
                   <Input
-                    label="Father's Name"
-                    {...register('deceased_father_name', { required: "Father's name is required" })}
+                    label={t('death.middleName')}
+                    {...register('deceased_father_name', { required: t('death.fatherNameRequired') })}
                     error={errors.deceased_father_name}
                     required
                   />
                   <Input
-                    label="Grandfather's Name"
+                    label={t('death.lastName')}
                     {...register('deceased_grandfather_name')}
                   />
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
                   <SelectField
-                    label="Gender"
+                    label={t('death.gender')}
                     name="deceased_gender"
-                    options={GENDER_OPTIONS}
+                    options={GENDER_OPTIONS_TRANSLATED}
                     register={register}
                     errors={errors}
                     required
                   />
                   <Input
                     type="date"
-                    label="Date of Birth"
+                    label={t('death.dateOfBirth')}
                     {...register('date_of_birth')}
                   />
                   <Input
-                    label="Nationality"
+                    label={t('death.nationality')}
                     {...register('nationality')}
-                    placeholder="e.g., Ethiopian"
+                    placeholder={t('death.nationalityPlaceholder')}
                   />
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
                   <Input
-                    label="Ethnicity"
+                    label={t('death.ethnicity')}
                     {...register('ethnicity')}
-                    placeholder="e.g., Amhara, Oromo"
+                    placeholder={t('death.ethnicityPlaceholder')}
                   />
                   <Input
-                    label="Religion"
+                    label={t('death.religion')}
                     {...register('religion')}
-                    placeholder="e.g., Orthodox, Muslim"
+                    placeholder={t('death.religionPlaceholder')}
                   />
                   <SelectField
-                    label="Marital Status"
+                    label={t('death.maritalStatus')}
                     name="marital_status"
-                    options={MARITAL_STATUS_OPTIONS}
+                    options={MARITAL_STATUS_OPTIONS_TRANSLATED}
                     register={register}
                     errors={errors}
                   />
@@ -255,14 +367,14 @@ const DeathRecordForm = ({ isOpen, onClose, record = null, onSuccess }) => {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                   <Input
-                    label="Occupation"
+                    label={t('death.occupation')}
                     {...register('occupation')}
-                    placeholder="e.g., Teacher, Farmer"
+                    placeholder={t('death.occupationPlaceholder')}
                   />
                   <SelectField
-                    label="Education Level"
+                    label={t('death.educationLevel')}
                     name="education"
-                    options={EDUCATION_OPTIONS}
+                    options={EDUCATION_OPTIONS_TRANSLATED}
                     register={register}
                     errors={errors}
                   />
@@ -271,45 +383,45 @@ const DeathRecordForm = ({ isOpen, onClose, record = null, onSuccess }) => {
 
               {/* Usual Residence */}
               <div className="bg-gray-50 p-6 rounded-lg">
-                <h3 className="text-lg font-semibold mb-4 text-gray-800">Usual Residence</h3>
+                <h3 className="text-lg font-semibold mb-4 text-gray-800">{t('death.usualResidence')}</h3>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <SelectField
-                    label="Region"
+                    label={t('death.deathRegion')}
                     name="usual_region"
-                    options={ETHIOPIAN_REGIONS}
+                    options={ETHIOPIAN_REGIONS_TRANSLATED}
                     register={register}
                     errors={errors}
                   />
                   <Input
-                    label="Zone"
+                    label={t('death.deathZone')}
                     {...register('usual_zone')}
-                    placeholder="e.g., West Shewa"
+                    placeholder={t('death.zonePlaceholder')}
                   />
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
                   <Input
-                    label="Woreda"
+                    label={t('death.deathWoreda')}
                     {...register('usual_woreda')}
-                    placeholder="e.g., Ambo"
+                    placeholder={t('death.woredaPlaceholder')}
                   />
                   <Input
-                    label="Kebele"
+                    label={t('death.deathKebele')}
                     {...register('usual_kebele')}
-                    placeholder="e.g., 01"
+                    placeholder={t('death.kebelePlaceholder')}
                   />
                   <Input
-                    label="City/Town"
+                    label={t('death.cityTown')}
                     {...register('usual_city')}
                   />
                 </div>
 
                 <div className="mt-4">
                   <Input
-                    label="House Number"
+                    label={t('death.houseNumber')}
                     {...register('usual_house_number')}
-                    placeholder="e.g., H.No. 123"
+                    placeholder={t('death.houseNumberPlaceholder')}
                   />
                 </div>
               </div>
@@ -320,41 +432,68 @@ const DeathRecordForm = ({ isOpen, onClose, record = null, onSuccess }) => {
           {activeTab === 'death' && (
             <div className="space-y-6">
               <div className="bg-red-50 p-6 rounded-lg border border-red-200">
-                <h3 className="text-lg font-semibold mb-4 text-red-800">Death Information</h3>
+                <h3 className="text-lg font-semibold mb-4 text-red-800">{t('death.deathInformation')}</h3>
                 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <Input
                     type="date"
-                    label="Date of Death"
-                    {...register('date_of_death', { required: 'Date of death is required' })}
+                    label={t('death.dateOfDeath')}
+                    {...register('date_of_death', { required: t('death.dateOfDeathRequired') })}
                     error={errors.date_of_death}
                     required
                   />
                   <Input
                     type="time"
-                    label="Time of Death"
+                    label={t('death.timeOfDeathLabel')}
                     {...register('time_of_death')}
                   />
-                  <Input
-                    type="number"
-                    label="Age at Death"
-                    {...register('age_at_death')}
-                    placeholder="e.g., 60"
-                  />
+                  <div className="space-y-1">
+                    <label className="block text-sm font-medium text-gray-700">
+                      {t('death.ageAtDeathAutoCalculated')}
+                    </label>
+                    <div className="flex items-center gap-2">
+                      <Input
+                        type="number"
+                        {...register('age_at_death')}
+                        placeholder={t('common.loading')}
+                        className="flex-1"
+                        readOnly
+                        style={{ backgroundColor: '#f3f4f6' }}
+                      />
+                      {calculatedAge.value && (
+                        <span className="text-sm font-medium text-green-600 whitespace-nowrap">
+                          {calculatedAge.value} {t(`death.age${calculatedAge.type.charAt(0).toUpperCase() + calculatedAge.type.slice(1)}`)}
+                        </span>
+                      )}
+                    </div>
+                    {!dateOfBirth && !dateOfDeath && (
+                      <p className="text-xs text-gray-500">{t('death.enterDatesToCalculate')}</p>
+                    )}
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                  <div className="space-y-1">
+                    <label className="block text-sm font-medium text-gray-700">
+                      {t('death.ageTypeAutoSet')}
+                    </label>
+                    <select
+                      {...register('age_type')}
+                      className="block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 sm:text-sm bg-gray-100"
+                      disabled
+                    >
+                      <option value="">{t('common.select')} {t('death.ageTypeAutoSet').toLowerCase()}</option>
+                      {AGE_TYPE_OPTIONS_TRANSLATED.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                   <SelectField
-                    label="Age Type"
-                    name="age_type"
-                    options={AGE_TYPE_OPTIONS}
-                    register={register}
-                    errors={errors}
-                  />
-                  <SelectField
-                    label="Place of Death Type"
+                    label={t('death.placeOfDeathType')}
                     name="place_of_death_type"
-                    options={PLACE_OF_DEATH_OPTIONS}
+                    options={PLACE_OF_DEATH_OPTIONS_TRANSLATED}
                     register={register}
                     errors={errors}
                   />
@@ -362,27 +501,27 @@ const DeathRecordForm = ({ isOpen, onClose, record = null, onSuccess }) => {
 
                 <div className="mt-4">
                   <Input
-                    label="Place of Death Name"
+                    label={t('death.placeOfDeathName')}
                     {...register('place_of_death_name')}
-                    placeholder="e.g., Black Lion Hospital, Home Address"
+                    placeholder={t('death.placeOfDeathPlaceholder')}
                   />
                 </div>
               </div>
 
               {/* Cause of Death */}
               <div className="bg-gray-50 p-6 rounded-lg">
-                <h3 className="text-lg font-semibold mb-4 text-gray-800">Cause of Death</h3>
+                <h3 className="text-lg font-semibold mb-4 text-gray-800">{t('death.causeOfDeathSection')}</h3>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <Input
-                    label="Immediate Cause"
+                    label={t('death.immediateCause')}
                     {...register('cause_of_death')}
-                    placeholder="e.g., Heart failure, Accident"
+                    placeholder={t('death.immediateCausePlaceholder')}
                   />
                   <SelectField
-                    label="Cause Type"
+                    label={t('death.causeType')}
                     name="cause_of_death_type"
-                    options={CAUSE_TYPE_OPTIONS}
+                    options={CAUSE_TYPE_OPTIONS_TRANSLATED}
                     register={register}
                     errors={errors}
                   />
@@ -390,13 +529,13 @@ const DeathRecordForm = ({ isOpen, onClose, record = null, onSuccess }) => {
 
                 <div className="mt-4">
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Underlying Causes
+                    {t('death.underlyingCauses')}
                   </label>
                   <textarea
                     {...register('underlying_causes')}
                     rows={3}
                     className="block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 sm:text-sm"
-                    placeholder="Describe any underlying conditions or contributing factors..."
+                    placeholder={t('death.underlyingCausesPlaceholder')}
                   />
                 </div>
               </div>
@@ -407,45 +546,45 @@ const DeathRecordForm = ({ isOpen, onClose, record = null, onSuccess }) => {
           {activeTab === 'location' && (
             <div className="space-y-6">
               <div className="bg-blue-50 p-6 rounded-lg border border-blue-200">
-                <h3 className="text-lg font-semibold mb-4 text-blue-800">Death Location Details</h3>
+                <h3 className="text-lg font-semibold mb-4 text-blue-800">{t('death.deathLocationDetails')}</h3>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <SelectField
-                    label="Region"
+                    label={t('death.deathRegion')}
                     name="death_region"
-                    options={ETHIOPIAN_REGIONS}
+                    options={ETHIOPIAN_REGIONS_TRANSLATED}
                     register={register}
                     errors={errors}
                   />
                   <Input
-                    label="Zone"
+                    label={t('death.deathZone')}
                     {...register('death_zone')}
-                    placeholder="e.g., Addis Ababa"
+                    placeholder={t('death.zonePlaceholder')}
                   />
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
                   <Input
-                    label="Woreda"
+                    label={t('death.deathWoreda')}
                     {...register('death_woreda')}
-                    placeholder="e.g., 01"
+                    placeholder={t('death.woredaPlaceholder')}
                   />
                   <Input
-                    label="Kebele"
+                    label={t('death.deathKebele')}
                     {...register('death_kebele')}
-                    placeholder="e.g., 01"
+                    placeholder={t('death.kebelePlaceholder')}
                   />
                   <Input
-                    label="City/Town"
+                    label={t('death.cityTown')}
                     {...register('death_city')}
                   />
                 </div>
 
                 <div className="mt-4">
                   <Input
-                    label="Specific Location"
+                    label={t('death.specificLocation')}
                     {...register('death_specific_location')}
-                    placeholder="e.g., Near Meskel Square, Building name"
+                    placeholder={t('death.specificLocationPlaceholder')}
                   />
                 </div>
               </div>
@@ -456,44 +595,44 @@ const DeathRecordForm = ({ isOpen, onClose, record = null, onSuccess }) => {
           {activeTab === 'informant' && (
             <div className="space-y-6">
               <div className="bg-green-50 p-6 rounded-lg border border-green-200">
-                <h3 className="text-lg font-semibold mb-4 text-green-800">Informant Information</h3>
+                <h3 className="text-lg font-semibold mb-4 text-green-800">{t('death.informantInformation')}</h3>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <Input
-                    label="Informant Name"
+                    label={t('death.informantNameLabel')}
                     {...register('informant_name')}
-                    placeholder="Full name"
+                    placeholder={t('death.fullNamePlaceholder')}
                   />
                   <Input
-                    label="Relationship to Deceased"
+                    label={t('death.relationshipToDeceased')}
                     {...register('informant_relationship')}
-                    placeholder="e.g., Son, Wife, Friend"
+                    placeholder={t('death.relationshipPlaceholder')}
                   />
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                   <Input
-                    label="ID Number"
+                    label={t('death.idNumberLabel')}
                     {...register('informant_id_number')}
-                    placeholder="e.g., 123-456-7890"
+                    placeholder={t('death.idNumberPlaceholder')}
                   />
                   <Input
                     type="tel"
-                    label="Phone Number"
+                    label={t('death.phoneNumberLabel')}
                     {...register('informant_phone')}
-                    placeholder="e.g., 0911234567"
+                    placeholder={t('death.phoneNumberPlaceholder')}
                   />
                 </div>
 
                 <div className="mt-4">
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Address
+                    {t('death.addressLabel')}
                   </label>
                   <textarea
                     {...register('informant_address')}
                     rows={2}
                     className="block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm"
-                    placeholder="Informant's full address..."
+                    placeholder={t('death.informantAddressPlaceholder')}
                   />
                 </div>
               </div>
@@ -504,31 +643,31 @@ const DeathRecordForm = ({ isOpen, onClose, record = null, onSuccess }) => {
           {activeTab === 'medical' && (
             <div className="space-y-6">
               <div className="bg-purple-50 p-6 rounded-lg border border-purple-200">
-                <h3 className="text-lg font-semibold mb-4 text-purple-800">Medical Certification</h3>
+                <h3 className="text-lg font-semibold mb-4 text-purple-800">{t('death.medicalCertification')}</h3>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <Input
-                    label="Certifying Doctor"
+                    label={t('death.certifyingDoctor')}
                     {...register('certifying_doctor')}
-                    placeholder="Dr. Full Name"
+                    placeholder={t('death.doctorNamePlaceholder')}
                   />
                   <Input
-                    label="Doctor's Qualification"
+                    label={t('death.doctorQualification')}
                     {...register('doctor_qualification')}
-                    placeholder="e.g., MD, GP"
+                    placeholder={t('death.doctorQualificationPlaceholder')}
                   />
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                   <Input
-                    label="Medical Certificate Number"
+                    label={t('death.medicalCertificateNumber')}
                     {...register('medical_certificate_number')}
-                    placeholder="e.g., MC-2024-001"
+                    placeholder={t('death.medicalCertificatePlaceholder')}
                   />
                   <Input
-                    label="Health Facility Name"
+                    label={t('death.healthFacilityName')}
                     {...register('health_facility_name')}
-                    placeholder="e.g., Black Lion Hospital"
+                    placeholder={t('death.healthFacilityPlaceholder')}
                   />
                 </div>
 
@@ -539,7 +678,7 @@ const DeathRecordForm = ({ isOpen, onClose, record = null, onSuccess }) => {
                     className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
                   />
                   <label className="ml-2 block text-sm text-gray-700">
-                    Death cause verified by medical professional
+                    {t('death.deathCauseVerified')}
                   </label>
                 </div>
               </div>
@@ -550,44 +689,44 @@ const DeathRecordForm = ({ isOpen, onClose, record = null, onSuccess }) => {
           {activeTab === 'burial' && (
             <div className="space-y-6">
               <div className="bg-gray-50 p-6 rounded-lg border border-gray-200">
-                <h3 className="text-lg font-semibold mb-4 text-gray-800">Burial Information</h3>
+                <h3 className="text-lg font-semibold mb-4 text-gray-800">{t('death.burialInformation')}</h3>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <Input
                     type="date"
-                    label="Burial Date"
+                    label={t('death.burialDateLabel')}
                     {...register('burial_date')}
                   />
                   <Input
-                    label="Burial Place"
+                    label={t('death.burialPlaceLabel')}
                     {...register('burial_place')}
-                    placeholder="e.g., St. Michael Cemetery"
+                    placeholder={t('death.burialPlacePlaceholder')}
                   />
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
                   <SelectField
-                    label="Burial Region"
+                    label={t('death.burialRegion')}
                     name="burial_region"
-                    options={ETHIOPIAN_REGIONS}
+                    options={ETHIOPIAN_REGIONS_TRANSLATED}
                     register={register}
                     errors={errors}
                   />
                   <Input
-                    label="Burial Zone"
+                    label={t('death.burialZone')}
                     {...register('burial_zone')}
                   />
                   <Input
-                    label="Burial Woreda"
+                    label={t('death.burialWoreda')}
                     {...register('burial_woreda')}
                   />
                 </div>
 
                 <div className="mt-4">
                   <Input
-                    label="Undertaker Name"
+                    label={t('death.undertakerName')}
                     {...register('undertaker_name')}
-                    placeholder="Name of funeral service provider"
+                    placeholder={t('death.undertakerPlaceholder')}
                   />
                 </div>
               </div>
@@ -607,7 +746,7 @@ const DeathRecordForm = ({ isOpen, onClose, record = null, onSuccess }) => {
                 }}
                 className="text-red-600 hover:text-red-700 font-medium"
               >
-                ← Previous
+                ← {t('common.previous')}
               </button>
             )}
           </div>
@@ -619,7 +758,7 @@ const DeathRecordForm = ({ isOpen, onClose, record = null, onSuccess }) => {
               onClick={onClose}
               disabled={isSubmitting}
             >
-              Cancel
+              {t('common.cancel')}
             </Button>
             
             {activeTab !== 'burial' ? (
@@ -631,7 +770,7 @@ const DeathRecordForm = ({ isOpen, onClose, record = null, onSuccess }) => {
                 }}
                 className="bg-gradient-to-r from-blue-600 to-blue-700"
               >
-                Next →
+                {t('common.next')} →
               </Button>
             ) : (
               <Button
@@ -639,7 +778,7 @@ const DeathRecordForm = ({ isOpen, onClose, record = null, onSuccess }) => {
                 loading={isSubmitting}
                 className="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800"
               >
-                {record ? 'Update Record' : 'Create Record'}
+                {record ? t('death.updateRecord') : t('death.createRecord')}
               </Button>
             )}
           </div>

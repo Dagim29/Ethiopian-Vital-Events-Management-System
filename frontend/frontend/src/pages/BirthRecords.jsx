@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { PlusIcon, MagnifyingGlassIcon, EyeIcon, PencilIcon, TrashIcon, FunnelIcon, ArrowDownTrayIcon } from '@heroicons/react/24/outline';
 import ViewBirthRecord from '../components/birth/ViewBirthRecord';
 import { useAuth } from '../context/AuthContext';
+import { useTranslation } from 'react-i18next';
 import { birthRecordsAPI } from '../services/api';
 import Button from '../components/common/Button';
 import Input from '../components/common/Input';
@@ -13,6 +14,7 @@ import * as XLSX from 'xlsx';
 
 const BirthRecords = () => {
   const { user } = useAuth();
+  const { t } = useTranslation();
   const [records, setRecords] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -76,8 +78,8 @@ const BirthRecords = () => {
         // Log if no records were found
         if (recordsData.length === 0) {
           const noRecordsMessage = searchTerm 
-            ? 'No birth records found matching your search criteria.'
-            : 'No birth records found in the database.';
+            ? t('records.noRecordsFound')
+            : t('records.noRecordsFound');
           
           console.warn(noRecordsMessage);
           
@@ -123,13 +125,13 @@ const BirthRecords = () => {
     setIsDeleting(true);
     try {
       await birthRecordsAPI.deleteRecord(recordToDelete.birth_id || recordToDelete.id);
-      toast.success('Birth record deleted successfully');
+      toast.success(t('messages.recordDeleted'));
       setIsDeleteModalOpen(false);
       setRecordToDelete(null);
       fetchRecords();
     } catch (error) {
       console.error('Error deleting record:', error);
-      toast.error(error.message || 'Failed to delete record');
+      toast.error(error.message || t('messages.operationFailed'));
     } finally {
       setIsDeleting(false);
     }
@@ -183,12 +185,20 @@ const BirthRecords = () => {
     const statusStyles = {
       approved: 'badge-success',
       draft: 'badge-warning',
+      pending: 'badge-warning',
       rejected: 'badge-error',
+    };
+    
+    const statusLabels = {
+      approved: t('records.approved'),
+      draft: t('records.draft'),
+      pending: t('records.pending'),
+      rejected: t('records.rejected'),
     };
     
     return (
       <span className={`${statusStyles[status] || 'badge-info'}`}>
-        {status.charAt(0).toUpperCase() + status.slice(1)}
+        {statusLabels[status] || status}
       </span>
     );
   };
@@ -235,10 +245,10 @@ const BirthRecords = () => {
       // Save file
       XLSX.writeFile(wb, filename);
       
-      toast.success(`Exported ${exportData.length} records successfully!`);
+      toast.success(`${t('common.export')} ${exportData.length} ${t('birth.totalRecords')} ${t('common.success')}!`);
     } catch (error) {
       console.error('Error exporting records:', error);
-      toast.error('Failed to export records. Please try again.');
+      toast.error(t('messages.operationFailed'));
     }
   };
 
@@ -246,7 +256,7 @@ const BirthRecords = () => {
     // Apply filters and fetch records
     fetchRecords();
     setShowFilters(false);
-    toast.success('Filters applied!');
+    toast.success(t('records.filtersApplied'));
   };
 
   const clearFilters = () => {
@@ -257,7 +267,7 @@ const BirthRecords = () => {
       region: '',
       gender: ''
     });
-    toast.info('Filters cleared!');
+    toast.info(t('records.filtersCleared'));
   };
 
   return (
@@ -271,10 +281,10 @@ const BirthRecords = () => {
                 <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center mr-4 shadow-lg">
                   <span className="text-white font-bold text-xl">📋</span>
                 </div>
-                Birth Records
+                {t('birth.title')}
               </h1>
               <p className="text-blue-100 mt-2 text-lg">
-                Manage birth registration records • {totalRecords.toLocaleString()} total records
+                {t('birth.manageRecords')} • {totalRecords.toLocaleString()} {t('birth.totalRecords')}
               </p>
             </div>
             {user?.role !== 'statistician' && (
@@ -283,7 +293,7 @@ const BirthRecords = () => {
                 className="bg-white text-blue-700 hover:bg-blue-50 font-semibold px-6 py-3 rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200"
               >
                 <PlusIcon className="h-5 w-5 mr-2" />
-                Add Birth Record
+                {t('birth.addNewBirth')}
               </Button>
             )}
           </div>
@@ -298,7 +308,7 @@ const BirthRecords = () => {
               <div className="relative">
                 <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
                 <Input
-                  placeholder="Search by name, certificate number..."
+                  placeholder={t('records.searchPlaceholder')}
                   value={searchTerm}
                   onChange={handleSearch}
                   className="pl-10 w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-base"
@@ -313,7 +323,7 @@ const BirthRecords = () => {
                 className="border-2 border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white font-semibold px-4 py-2 rounded-lg transition-all duration-200"
               >
                 <FunnelIcon className="h-4 w-4 mr-1" />
-                Filter
+                {t('common.filter')}
               </Button>
               <Button 
                 onClick={handleExport}
@@ -322,7 +332,7 @@ const BirthRecords = () => {
                 className="border-2 border-green-600 text-green-600 hover:bg-green-600 hover:text-white font-semibold px-4 py-2 rounded-lg transition-all duration-200"
               >
                 <ArrowDownTrayIcon className="h-4 w-4 mr-1" />
-                Export
+                {t('common.export')}
               </Button>
             </div>
           </div>
@@ -331,28 +341,28 @@ const BirthRecords = () => {
         {/* Filter Panel */}
         {showFilters && (
           <Card className="bg-white rounded-2xl shadow-lg border border-gray-200 p-6 mb-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Filter Records</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">{t('records.filterRecords')}</h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Gender</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{t('birth.gender')}</label>
                 <select
                   value={filters.gender}
                   onChange={(e) => setFilters({...filters, gender: e.target.value})}
                   className="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                 >
-                  <option value="">All Genders</option>
-                  <option value="male">Male</option>
-                  <option value="female">Female</option>
+                  <option value="">{t('records.allGenders')}</option>
+                  <option value="male">{t('birth.male')}</option>
+                  <option value="female">{t('birth.female')}</option>
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Region</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{t('records.region')}</label>
                 <select
                   value={filters.region}
                   onChange={(e) => setFilters({...filters, region: e.target.value})}
                   className="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                 >
-                  <option value="">All Regions</option>
+                  <option value="">{t('records.allRegions')}</option>
                   <option value="AD">Addis Ababa</option>
                   <option value="AF">Afar</option>
                   <option value="AM">Amhara</option>
@@ -367,21 +377,21 @@ const BirthRecords = () => {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{t('records.status')}</label>
                 <select
                   value={filters.status}
                   onChange={(e) => setFilters({...filters, status: e.target.value})}
                   className="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                 >
-                  <option value="">All Status</option>
-                  <option value="approved">Approved</option>
-                  <option value="pending">Pending</option>
-                  <option value="draft">Draft</option>
-                  <option value="rejected">Rejected</option>
+                  <option value="">{t('records.allStatuses')}</option>
+                  <option value="approved">{t('records.approved')}</option>
+                  <option value="pending">{t('records.pending')}</option>
+                  <option value="draft">{t('records.draft')}</option>
+                  <option value="rejected">{t('records.rejected')}</option>
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Date From</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{t('records.dateFrom')}</label>
                 <input
                   type="date"
                   value={filters.dateFrom}
@@ -390,7 +400,7 @@ const BirthRecords = () => {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Date To</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{t('records.dateTo')}</label>
                 <input
                   type="date"
                   value={filters.dateTo}
@@ -404,14 +414,14 @@ const BirthRecords = () => {
                 onClick={applyFilters}
                 className="bg-blue-600 text-white hover:bg-blue-700 px-6 py-2 rounded-lg"
               >
-                Apply Filters
+                {t('records.applyFilters')}
               </Button>
               <Button
                 onClick={clearFilters}
                 variant="outline"
                 className="border-gray-300 text-gray-700 hover:bg-gray-50 px-6 py-2 rounded-lg"
               >
-                Clear Filters
+                {t('records.clearFilters')}
               </Button>
             </div>
           </Card>
@@ -430,22 +440,22 @@ const BirthRecords = () => {
                 <thead className="bg-gradient-to-r from-gray-50 to-gray-100">
                   <tr>
                     <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
-                      Certificate #
+                      {t('birth.certificateNumber')}
                     </th>
                     <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
-                      Child's Name
+                      {t('birth.childName')}
                     </th>
                     <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
-                      Father's Name
+                      {t('birth.fatherName')}
                     </th>
                     <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
-                      Date of Birth
+                      {t('birth.dateOfBirth')}
                     </th>
                     <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
-                      Status
+                      {t('records.status')}
                     </th>
                     <th scope="col" className="px-6 py-4 text-right text-xs font-bold text-gray-700 uppercase tracking-wider">
-                      Actions
+                      {t('records.actions')}
                     </th>
                   </tr>
                 </thead>
@@ -457,7 +467,7 @@ const BirthRecords = () => {
                           <div className="w-20 h-20 bg-gradient-to-br from-blue-100 to-blue-200 rounded-full flex items-center justify-center mb-4 shadow-md">
                             <span className="text-4xl">📋</span>
                           </div>
-                          <p className="text-xl font-bold text-gray-900 mb-2">No birth records found</p>
+                          <p className="text-xl font-bold text-gray-900 mb-2">{t('records.noRecordsFound')}</p>
                           <p className="text-sm text-gray-500 mb-4">
                             {user?.role === 'statistician' ? 'No records available in the database' : 'Start by adding a new birth record'}
                           </p>
@@ -496,7 +506,7 @@ const BirthRecords = () => {
                               type="button"
                               onClick={() => handleViewRecord(record)}
                               className="text-green-600 hover:text-white hover:bg-green-600 p-2 rounded-lg transition-all duration-200 transform hover:scale-110 shadow-sm hover:shadow-md"
-                              title="View Details"
+                              title={t('records.viewDetails')}
                             >
                               <EyeIcon className="h-5 w-5" />
                             </button>
@@ -506,7 +516,7 @@ const BirthRecords = () => {
                                   type="button"
                                   onClick={() => handleEditRecord(record)}
                                   className="text-blue-600 hover:text-white hover:bg-blue-600 p-2 rounded-lg transition-all duration-200 transform hover:scale-110 shadow-sm hover:shadow-md"
-                                  title="Edit Birth Record"
+                                  title={t('records.editRecord')}
                                 >
                                   <PencilIcon className="h-5 w-5" />
                                 </button>
@@ -514,7 +524,7 @@ const BirthRecords = () => {
                                   type="button"
                                   onClick={() => handleDeleteClick(record)}
                                   className="text-red-600 hover:text-white hover:bg-red-600 p-2 rounded-lg transition-all duration-200 transform hover:scale-110 shadow-sm hover:shadow-md"
-                                  title="Delete Record"
+                                  title={t('records.deleteRecord')}
                                 >
                                   <TrashIcon className="h-5 w-5" />
                                 </button>
@@ -527,9 +537,12 @@ const BirthRecords = () => {
                   )}
                 </tbody>
               </table>
+            </div>
+          )}
               
               {/* Pagination */}
-              <div className="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
+              {records.length > 0 && (
+                <div className="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
                 <div className="flex-1 flex justify-between sm:hidden">
                   <Button
                     variant="outline"
@@ -537,7 +550,7 @@ const BirthRecords = () => {
                     disabled={currentPage === 1}
                     onClick={() => setCurrentPage(currentPage - 1)}
                   >
-                    Previous
+                    {t('common.previous')}
                   </Button>
                   <Button
                     variant="outline"
@@ -545,13 +558,13 @@ const BirthRecords = () => {
                     disabled={currentPage === totalPages}
                     onClick={() => setCurrentPage(currentPage + 1)}
                   >
-                    Next
+                    {t('common.next')}
                   </Button>
                 </div>
                 <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
                   <div>
                     <p className="text-sm text-gray-700">
-                      Showing page <span className="font-medium">{currentPage}</span> of{' '}
+                      {t('records.showing')} {t('common.page')} <span className="font-medium">{currentPage}</span> {t('records.of')}{' '}
                       <span className="font-medium">{totalPages}</span>
                     </p>
                   </div>
@@ -563,7 +576,7 @@ const BirthRecords = () => {
                         disabled={currentPage === 1}
                         onClick={() => setCurrentPage(currentPage - 1)}
                       >
-                        Previous
+                        {t('common.previous')}
                       </Button>
                       <Button
                         variant="outline"
@@ -572,14 +585,13 @@ const BirthRecords = () => {
                         onClick={() => setCurrentPage(currentPage + 1)}
                         className="ml-2"
                       >
-                        Next
+                        {t('common.next')}
                       </Button>
                     </nav>
                   </div>
                 </div>
-              </div>
-            </div>
-          )}
+                </div>
+              )}
         </Card>
       </div>
 

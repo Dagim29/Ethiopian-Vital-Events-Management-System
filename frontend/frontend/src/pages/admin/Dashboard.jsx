@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { usersAPI, auditLogsAPI } from '../../services/api';
 import StatCard from '../../components/dashboard/StatCard';
 import UserForm from '../../components/admin/UserForm';
@@ -28,6 +29,7 @@ import Modal from '../../components/common/Modal';
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [selectedUser, setSelectedUser] = useState(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isUserFormOpen, setIsUserFormOpen] = useState(false);
@@ -216,10 +218,10 @@ const AdminDashboard = () => {
                 <div className="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center mr-4 shadow-lg">
                   <ShieldCheckIcon className="h-8 w-8 text-white" />
                 </div>
-                Admin Dashboard
+                {t('dashboard.title')}
               </h1>
               <p className="text-blue-100 mt-2 text-lg">
-                System Overview & Management • {stats?.totalRecords?.toLocaleString() || 0} Total Records
+                {t('dashboard.overview')} • {stats?.totalRecords?.toLocaleString() || 0} {t('dashboard.totalRecords')}
               </p>
             </div>
             <Button 
@@ -227,7 +229,7 @@ const AdminDashboard = () => {
               className="bg-white text-blue-700 hover:bg-blue-50 font-semibold px-6 py-3 rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200"
             >
               <UserPlusIcon className="h-5 w-5 mr-2 inline" />
-              Add New User
+              {t('common.add')} New User
             </Button>
           </div>
         </div>
@@ -239,9 +241,9 @@ const AdminDashboard = () => {
           <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl shadow-xl p-6 text-white transform hover:scale-105 transition-all duration-200">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-blue-100 text-sm font-medium uppercase tracking-wide">Total Users</p>
+                <p className="text-blue-100 text-sm font-medium uppercase tracking-wide">{t('dashboard.totalUsers')}</p>
                 <p className="text-4xl font-bold mt-2">{stats?.totalUsers || 0}</p>
-                <p className="text-blue-100 text-xs mt-2">{stats?.activeUsers || 0} active</p>
+                <p className="text-blue-100 text-xs mt-2">{stats?.activeUsers || 0} {t('records.status')}</p>
               </div>
               <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4">
                 <UsersIcon className="h-10 w-10" />
@@ -252,9 +254,9 @@ const AdminDashboard = () => {
           <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-2xl shadow-xl p-6 text-white transform hover:scale-105 transition-all duration-200">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-green-100 text-sm font-medium uppercase tracking-wide">Active Today</p>
+                <p className="text-green-100 text-sm font-medium uppercase tracking-wide">{t('dashboard.activeToday')}</p>
                 <p className="text-4xl font-bold mt-2">{stats?.activeToday || 0}</p>
-                <p className="text-green-100 text-xs mt-2">Users logged in</p>
+                <p className="text-green-100 text-xs mt-2">{t('dashboard.usersLoggedIn')}</p>
               </div>
               <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4">
                 <BoltIcon className="h-10 w-10" />
@@ -265,9 +267,9 @@ const AdminDashboard = () => {
           <div className="bg-gradient-to-br from-yellow-500 to-orange-500 rounded-2xl shadow-xl p-6 text-white transform hover:scale-105 transition-all duration-200">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-yellow-100 text-sm font-medium uppercase tracking-wide">Pending</p>
+                <p className="text-yellow-100 text-sm font-medium uppercase tracking-wide">{t('dashboard.pending')}</p>
                 <p className="text-4xl font-bold mt-2">{stats?.pendingApprovals || 0}</p>
-                <p className="text-yellow-100 text-xs mt-2">Awaiting approval</p>
+                <p className="text-yellow-100 text-xs mt-2">{t('dashboard.awaitingApproval')}</p>
               </div>
               <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4">
                 <ClockIcon className="h-10 w-10" />
@@ -278,9 +280,9 @@ const AdminDashboard = () => {
           <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl shadow-xl p-6 text-white transform hover:scale-105 transition-all duration-200">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-purple-100 text-sm font-medium uppercase tracking-wide">Total Records</p>
+                <p className="text-purple-100 text-sm font-medium uppercase tracking-wide">{t('dashboard.totalRecords')}</p>
                 <p className="text-4xl font-bold mt-2">{stats?.totalRecords?.toLocaleString() || 0}</p>
-                <p className="text-purple-100 text-xs mt-2">All vital records</p>
+                <p className="text-purple-100 text-xs mt-2">{t('dashboard.allVitalRecords')}</p>
               </div>
               <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4">
                 <DocumentTextIcon className="h-10 w-10" />
@@ -293,7 +295,7 @@ const AdminDashboard = () => {
         <div className="bg-white rounded-2xl shadow-xl p-6">
           <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center">
             <ChartBarIcon className="h-7 w-7 mr-3 text-purple-600" />
-            Records Breakdown
+            {t('dashboard.recordsBreakdown')}
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <div className="bg-gradient-to-br from-pink-50 to-pink-100 rounded-xl p-5 border-2 border-pink-200 hover:shadow-lg transition-shadow">
@@ -301,7 +303,7 @@ const AdminDashboard = () => {
                 <CakeIcon className="h-8 w-8 text-pink-600" />
                 <span className="text-3xl font-bold text-pink-700">{stats?.totalBirths?.toLocaleString() || 0}</span>
               </div>
-              <h3 className="text-sm font-semibold text-pink-900 uppercase tracking-wide">Birth Records</h3>
+              <h3 className="text-sm font-semibold text-pink-900 uppercase tracking-wide">{t('dashboard.birthRecords')}</h3>
               <div className="mt-2 bg-pink-200 rounded-full h-2">
                 <div 
                   className="bg-pink-600 h-2 rounded-full" 
@@ -315,7 +317,7 @@ const AdminDashboard = () => {
                 <FaceFrownIcon className="h-8 w-8 text-gray-600" />
                 <span className="text-3xl font-bold text-gray-700">{stats?.totalDeaths?.toLocaleString() || 0}</span>
               </div>
-              <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wide">Death Records</h3>
+              <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wide">{t('dashboard.deathRecords')}</h3>
               <div className="mt-2 bg-gray-300 rounded-full h-2">
                 <div 
                   className="bg-gray-600 h-2 rounded-full" 
@@ -329,7 +331,7 @@ const AdminDashboard = () => {
                 <HeartIcon className="h-8 w-8 text-red-600" />
                 <span className="text-3xl font-bold text-red-700">{stats?.totalMarriages?.toLocaleString() || 0}</span>
               </div>
-              <h3 className="text-sm font-semibold text-red-900 uppercase tracking-wide">Marriage Records</h3>
+              <h3 className="text-sm font-semibold text-red-900 uppercase tracking-wide">{t('dashboard.marriageRecords')}</h3>
               <div className="mt-2 bg-red-200 rounded-full h-2">
                 <div 
                   className="bg-red-600 h-2 rounded-full" 
@@ -343,7 +345,7 @@ const AdminDashboard = () => {
                 <XCircleIcon className="h-8 w-8 text-orange-600" />
                 <span className="text-3xl font-bold text-orange-700">{stats?.totalDivorces?.toLocaleString() || 0}</span>
               </div>
-              <h3 className="text-sm font-semibold text-orange-900 uppercase tracking-wide">Divorce Records</h3>
+              <h3 className="text-sm font-semibold text-orange-900 uppercase tracking-wide">{t('dashboard.divorceRecords')}</h3>
               <div className="mt-2 bg-orange-200 rounded-full h-2">
                 <div 
                   className="bg-orange-600 h-2 rounded-full" 
@@ -358,7 +360,7 @@ const AdminDashboard = () => {
         <div className="bg-white rounded-2xl shadow-xl p-6">
           <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center">
             <ClockIcon className="h-7 w-7 mr-3 text-teal-600" />
-            Recent Activity
+            {t('dashboard.recentActivity')}
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div 
@@ -369,22 +371,30 @@ const AdminDashboard = () => {
                 <ClockIcon className="h-8 w-8 text-teal-600" />
                 <span className="text-3xl font-bold text-teal-700">{auditStats?.total_logs?.toLocaleString() || 0}</span>
               </div>
-              <h3 className="text-sm font-semibold text-teal-900 uppercase tracking-wide">Total Audit Logs</h3>
-              <p className="text-xs text-teal-700 mt-2">All system activities tracked</p>
-              <p className="text-xs text-teal-600 mt-2 font-medium">Click to view all →</p>
+              <h3 className="text-sm font-semibold text-teal-900 uppercase tracking-wide">{t('dashboard.totalAuditLogs')}</h3>
+              <p className="text-xs text-teal-700 mt-2">{t('dashboard.allSystemActivities')}</p>
+              <p className="text-xs text-teal-600 mt-2 font-medium">{t('dashboard.clickToViewAll')}</p>
             </div>
 
             <div 
-              onClick={() => navigate('/audit-logs')}
+              onClick={() => {
+                const today = new Date().toISOString().split('T')[0];
+                navigate('/audit-logs', { 
+                  state: { 
+                    filterByDate: true,
+                    startDate: today
+                  } 
+                });
+              }}
               className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-5 border-2 border-green-200 hover:shadow-lg hover:scale-105 transition-all cursor-pointer"
             >
               <div className="flex items-center justify-between mb-3">
                 <BoltIcon className="h-8 w-8 text-green-600" />
                 <span className="text-3xl font-bold text-green-700">{auditStats?.recent_activity || 0}</span>
               </div>
-              <h3 className="text-sm font-semibold text-green-900 uppercase tracking-wide">Last 24 Hours</h3>
-              <p className="text-xs text-green-700 mt-2">Recent system actions</p>
-              <p className="text-xs text-green-600 mt-2 font-medium">Click to view recent →</p>
+              <h3 className="text-sm font-semibold text-green-900 uppercase tracking-wide">{t('dashboard.last24Hours')}</h3>
+              <p className="text-xs text-green-700 mt-2">{t('dashboard.recentSystemActions')}</p>
+              <p className="text-xs text-green-600 mt-2 font-medium">{t('dashboard.clickToViewRecent')}</p>
             </div>
 
             <div 
@@ -395,9 +405,9 @@ const AdminDashboard = () => {
                 <ShieldCheckIcon className="h-8 w-8 text-blue-600" />
                 <span className="text-3xl font-bold text-blue-700">{auditStats?.active_users || 0}</span>
               </div>
-              <h3 className="text-sm font-semibold text-blue-900 uppercase tracking-wide">Active Users</h3>
-              <p className="text-xs text-blue-700 mt-2">Users with recent activity</p>
-              <p className="text-xs text-blue-600 mt-2 font-medium">Click to view details →</p>
+              <h3 className="text-sm font-semibold text-blue-900 uppercase tracking-wide">{t('dashboard.activeUsers')}</h3>
+              <p className="text-xs text-blue-700 mt-2">{t('dashboard.usersActiveLast7Days')}</p>
+              <p className="text-xs text-blue-600 mt-2 font-medium">{t('dashboard.clickToViewDetails')}</p>
             </div>
           </div>
         </div>
@@ -407,7 +417,7 @@ const AdminDashboard = () => {
           <div className="px-6 py-5 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-gray-100">
             <h2 className="text-2xl font-bold text-gray-900 flex items-center">
               <UserGroupIcon className="h-7 w-7 mr-3 text-blue-600" />
-              User Management
+              {t('dashboard.userManagement')}
             </h2>
           </div>
           <div className="overflow-x-auto">
@@ -531,7 +541,7 @@ const AdminDashboard = () => {
         <div className="p-6">
           <div className="mb-4">
             <p className="text-sm text-gray-600">
-              Users who have logged in within the last 24 hours
+              Users who have logged in within the last 7 days
             </p>
           </div>
           
@@ -562,9 +572,9 @@ const AdminDashboard = () => {
                     .filter(user => {
                       if (!user.last_login) return false;
                       const lastLogin = new Date(user.last_login);
-                      const yesterday = new Date();
-                      yesterday.setDate(yesterday.getDate() - 1);
-                      return lastLogin >= yesterday;
+                      const sevenDaysAgo = new Date();
+                      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+                      return lastLogin >= sevenDaysAgo;
                     })
                     .map((user) => (
                       <tr key={user.user_id} className="hover:bg-gray-50">
@@ -608,12 +618,12 @@ const AdminDashboard = () => {
               {usersData.filter(user => {
                 if (!user.last_login) return false;
                 const lastLogin = new Date(user.last_login);
-                const yesterday = new Date();
-                yesterday.setDate(yesterday.getDate() - 1);
-                return lastLogin >= yesterday;
+                const sevenDaysAgo = new Date();
+                sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+                return lastLogin >= sevenDaysAgo;
               }).length === 0 && (
                 <div className="text-center py-8">
-                  <p className="text-gray-500">No active users in the last 24 hours</p>
+                  <p className="text-gray-500">No active users in the last 7 days</p>
                 </div>
               )}
             </div>

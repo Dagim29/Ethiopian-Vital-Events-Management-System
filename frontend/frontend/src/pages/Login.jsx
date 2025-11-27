@@ -3,9 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import { EyeIcon, EyeSlashIcon, EnvelopeIcon, LockClosedIcon } from '@heroicons/react/24/outline';
 import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
+import { useTranslation } from 'react-i18next';
+import LanguageSelector from '../components/common/LanguageSelector';
 import logo from '../assets/ethiopia-flag-icon.svg';
 
 const Login = () => {
+  const { t } = useTranslation();
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -43,13 +46,13 @@ const Login = () => {
     const newErrors = {};
     
     if (!formData.email) {
-      newErrors.email = 'Email is required';
+      newErrors.email = t('auth.emailRequired');
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = 'Email is invalid';
+      newErrors.email = t('auth.emailInvalid');
     }
     
     if (!formData.password) {
-      newErrors.password = 'Password is required';
+      newErrors.password = t('auth.passwordRequired');
     }
     
     setErrors(newErrors);
@@ -115,7 +118,10 @@ const Login = () => {
             <img src={logo} alt="Ethiopia Flag" className="h-16 w-auto" />
           </div>
           <h1 className="text-3xl font-bold text-gray-900">Vital Records System</h1>
-          <p className="mt-2 text-gray-600">Sign in to access your account</p>
+          <p className="mt-2 text-gray-600">{t('auth.loginSubtitle')}</p>
+          <div className="mt-4 flex justify-center">
+            <LanguageSelector />
+          </div>
         </motion.div>
 
         <motion.div
@@ -139,7 +145,7 @@ const Login = () => {
             <form className="space-y-6" onSubmit={handleSubmit}>
               <motion.div variants={itemVariants}>
                 <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-                  Email Address
+                  {t('auth.email')}
                 </label>
                 <div className="relative rounded-md shadow-sm">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -164,10 +170,10 @@ const Login = () => {
               <motion.div variants={itemVariants}>
                 <div className="flex items-center justify-between">
                   <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
-                    Password
+                    {t('auth.password')}
                   </label>
                   <a href="#" className="text-xs text-ethiopia-blue hover:text-ethiopia-blue/80">
-                    Forgot password?
+                    {t('auth.forgotPassword')}
                   </a>
                 </div>
                 <div className="relative rounded-md shadow-sm">
@@ -227,7 +233,7 @@ const Login = () => {
                       </svg>
                       Signing in...
                     </>
-                  ) : 'Sign in'}
+                  ) : t('auth.loginButton')}
                 </button>
               </motion.div>
             </form>

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
+import { useTranslation } from 'react-i18next';
 import { birthRecordsAPI } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import Button from '../common/Button';
@@ -8,45 +9,20 @@ import Modal from '../common/Modal';
 import ImageUpload from '../common/ImageUpload';
 import { toast } from 'react-toastify';
 
-const GENDER_OPTIONS = [
-  { value: 'male', label: 'Male' },
-  { value: 'female', label: 'Female' },
-];
+// These will be translated inside the component
 
-const PLACE_OF_BIRTH_OPTIONS = [
-  { value: 'hospital', label: 'Hospital' },
-  { value: 'home', label: 'Home' },
-  { value: 'clinic', label: 'Health Clinic' },
-  { value: 'other', label: 'Other' },
-];
-
-const ETHIOPIAN_REGIONS = [
-  { value: 'AD', label: 'Addis Ababa' },
-  { value: 'AA', label: 'Afar' },
-  { value: 'AM', label: 'Amhara' },
-  { value: 'BG', label: 'Benishangul-Gumuz' },
-  { value: 'DD', label: 'Dire Dawa' },
-  { value: 'GA', label: 'Gambela' },
-  { value: 'HA', label: 'Harari' },
-  { value: 'OR', label: 'Oromia' },
-  { value: 'SI', label: 'Sidama' },
-  { value: 'SO', label: 'Somali' },
-  { value: 'SN', label: 'Southern Nations' },
-  { value: 'TI', label: 'Tigray' },
-];
-
-const SelectField = ({ label, name, options, register, errors, required = false }) => (
+const SelectField = ({ label, name, options, register, errors, required = false, t }) => (
   <div className="space-y-1">
     <label className="block text-sm font-medium text-gray-700">
       {label} {required && <span className="text-red-500">*</span>}
     </label>
     <select
-      {...register(name, required ? { required: `${label} is required` } : {})}
+      {...register(name, required ? { required: `${label} ${t ? t('common.required') : 'is required'}` } : {})}
       className={`block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm ${
         errors[name] ? 'border-red-500' : ''
       }`}
     >
-      <option value="">Select {label.toLowerCase()}</option>
+      <option value="">{t ? t('common.select') : 'Select'} {label.toLowerCase()}</option>
       {options.map((option) => (
         <option key={option.value} value={option.value}>
           {option.label}
@@ -61,6 +37,35 @@ const SelectField = ({ label, name, options, register, errors, required = false 
 
 const BirthRecordForm = ({ isOpen, onClose, record = null, onSuccess }) => {
   const { user } = useAuth();
+  const { t } = useTranslation();
+  
+  const GENDER_OPTIONS = [
+    { value: 'male', label: t('birth.male') },
+    { value: 'female', label: t('birth.female') },
+  ];
+
+  const PLACE_OF_BIRTH_OPTIONS = [
+    { value: 'hospital', label: t('birth.hospitalBirth') },
+    { value: 'home', label: t('birth.homeBirth') },
+    { value: 'clinic', label: t('birth.clinicBirth') },
+    { value: 'other', label: t('birth.otherBirth') },
+  ];
+
+  const ETHIOPIAN_REGIONS = [
+    { value: 'AD', label: t('birth.addisAbaba') },
+    { value: 'AA', label: t('birth.afar') },
+    { value: 'AM', label: t('birth.amhara') },
+    { value: 'BG', label: t('birth.benishangul') },
+    { value: 'DD', label: t('birth.direDawa') },
+    { value: 'GA', label: t('birth.gambella') },
+    { value: 'HA', label: t('birth.harari') },
+    { value: 'OR', label: t('birth.oromia') },
+    { value: 'SI', label: t('birth.sidama') },
+    { value: 'SO', label: t('birth.somali') },
+    { value: 'SN', label: t('birth.southernNations') },
+    { value: 'TI', label: t('birth.tigray') },
+  ];
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeTab, setActiveTab] = useState('child');
   const [childPhoto, setChildPhoto] = useState(null);
@@ -130,18 +135,18 @@ const BirthRecordForm = ({ isOpen, onClose, record = null, onSuccess }) => {
   if (!isOpen) return null;
 
   const tabs = [
-    { id: 'child', label: 'Child Info', icon: '👶' },
-    { id: 'birth', label: 'Birth Details', icon: '📋' },
-    { id: 'father', label: 'Father Info', icon: '👨' },
-    { id: 'mother', label: 'Mother Info', icon: '👩' },
-    { id: 'informant', label: 'Informant', icon: '👥' },
+    { id: 'child', label: t('birth.childInfo'), icon: '👶' },
+    { id: 'birth', label: t('birth.deliveryInfo'), icon: '📋' },
+    { id: 'father', label: t('birth.fatherInfo'), icon: '👨' },
+    { id: 'mother', label: t('birth.motherInfo'), icon: '👩' },
+    { id: 'informant', label: t('birth.witnessInfo'), icon: '👥' },
   ];
 
   return (
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={record ? 'Edit Birth Record' : 'Register New Birth'}
+      title={record ? t('birth.editBirth') : t('birth.addNewBirth')}
       maxWidth="max-w-6xl"
     >
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
@@ -171,54 +176,55 @@ const BirthRecordForm = ({ isOpen, onClose, record = null, onSuccess }) => {
           {activeTab === 'child' && (
             <div className="space-y-6">
               <div className="bg-blue-50 p-6 rounded-lg border border-blue-200">
-                <h3 className="text-lg font-semibold mb-4 text-blue-800">Child Information</h3>
+                <h3 className="text-lg font-semibold mb-4 text-blue-800">{t('birth.childInfo')}</h3>
                 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <Input
-                    label="First Name"
-                    {...register('child_first_name', { required: 'First name is required' })}
+                    label={t('birth.firstName')}
+                    {...register('child_first_name', { required: t('birth.firstName') + ' is required' })}
                     error={errors.child_first_name}
                     required
                   />
                   <Input
-                    label="Father's Name"
-                    {...register('child_father_name', { required: "Father's name is required" })}
+                    label={t('birth.middleName')}
+                    {...register('child_father_name', { required: t('birth.middleName') + ' is required' })}
                     error={errors.child_father_name}
                     required
                   />
                   <Input
-                    label="Grandfather's Name"
+                    label={t('birth.lastName')}
                     {...register('child_grandfather_name')}
                   />
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                   <SelectField
-                    label="Gender"
+                    label={t('birth.gender')}
                     name="child_gender"
                     options={GENDER_OPTIONS}
                     register={register}
                     errors={errors}
                     required
+                    t={t}
                   />
                   <Input
                     type="number"
                     step="0.1"
-                    label="Weight (kg)"
+                    label={t('birth.weight')}
                     {...register('weight_kg')}
-                    placeholder="e.g., 3.2"
+                    placeholder={t('birth.weightPlaceholder')}
                   />
                 </div>
 
                 {/* Photo Upload */}
                 <div className="mt-4">
                   <ImageUpload
-                    label="Child Photo"
+                    label={t('birth.childPhoto')}
                     value={childPhoto}
                     onChange={(file, preview) => {
                       setChildPhoto(preview);
                     }}
-                    helperText="Upload child's photo (PNG, JPG up to 5MB)"
+                    helperText={t('birth.uploadChildPhoto')}
                   />
                 </div>
               </div>
@@ -229,71 +235,73 @@ const BirthRecordForm = ({ isOpen, onClose, record = null, onSuccess }) => {
           {activeTab === 'birth' && (
             <div className="space-y-6">
               <div className="bg-blue-50 p-6 rounded-lg border border-blue-200">
-                <h3 className="text-lg font-semibold mb-4 text-blue-800">Birth Information</h3>
+                <h3 className="text-lg font-semibold mb-4 text-blue-800">{t('birth.birthInformation')}</h3>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <Input
                     type="date"
-                    label="Date of Birth"
-                    {...register('date_of_birth', { required: 'Date of birth is required' })}
+                    label={t('birth.dateOfBirth')}
+                    {...register('date_of_birth', { required: t('birth.dateOfBirthRequired') })}
                     error={errors.date_of_birth}
                     required
                   />
                   <Input
                     type="time"
-                    label="Time of Birth"
+                    label={t('birth.timeOfBirth')}
                     {...register('time_of_birth')}
                   />
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                   <SelectField
-                    label="Place of Birth Type"
+                    label={t('birth.placeOfBirthType')}
                     name="place_of_birth_type"
                     options={PLACE_OF_BIRTH_OPTIONS}
                     register={register}
                     errors={errors}
+                    t={t}
                   />
                   <Input
-                    label="Place of Birth Name"
+                    label={t('birth.placeOfBirthName')}
                     {...register('place_of_birth_name')}
-                    placeholder="e.g., Tikur Anbessa Hospital"
+                    placeholder={t('birth.placeOfBirthPlaceholder')}
                   />
                 </div>
               </div>
 
               {/* Birth Location */}
               <div className="bg-gray-50 p-6 rounded-lg">
-                <h3 className="text-lg font-semibold mb-4 text-gray-800">Birth Location</h3>
+                <h3 className="text-lg font-semibold mb-4 text-gray-800">{t('birth.birthLocation')}</h3>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <SelectField
-                    label="Region"
+                    label={t('birth.birthRegion')}
                     name="birth_region"
                     options={ETHIOPIAN_REGIONS}
                     register={register}
                     errors={errors}
+                    t={t}
                   />
                   <Input
-                    label="Zone"
+                    label={t('birth.birthZone')}
                     {...register('birth_zone')}
-                    placeholder="e.g., Addis Ababa"
+                    placeholder={t('birth.zonePlaceholder')}
                   />
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
                   <Input
-                    label="Woreda"
+                    label={t('birth.birthWoreda')}
                     {...register('birth_woreda')}
-                    placeholder="e.g., 01"
+                    placeholder={t('birth.woredaPlaceholder')}
                   />
                   <Input
-                    label="Kebele"
+                    label={t('birth.birthKebele')}
                     {...register('birth_kebele')}
-                    placeholder="e.g., 01"
+                    placeholder={t('birth.kebelePlaceholder')}
                   />
                   <Input
-                    label="City/Town"
+                    label={t('birth.birthCity')}
                     {...register('birth_city')}
                   />
                 </div>
@@ -305,75 +313,75 @@ const BirthRecordForm = ({ isOpen, onClose, record = null, onSuccess }) => {
           {activeTab === 'father' && (
             <div className="space-y-6">
               <div className="bg-green-50 p-6 rounded-lg border border-green-200">
-                <h3 className="text-lg font-semibold mb-4 text-green-800">Father Information</h3>
+                <h3 className="text-lg font-semibold mb-4 text-green-800">{t('birth.fatherInfo')}</h3>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <Input
-                    label="Full Name"
+                    label={t('birth.fatherName')}
                     {...register('father_full_name')}
                     placeholder="Full name"
                   />
                   <Input
                     type="date"
-                    label="Date of Birth"
+                    label={t('birth.dateOfBirth')}
                     {...register('father_date_of_birth')}
                   />
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
                   <Input
-                    label="Nationality"
+                    label={t('birth.fatherNationality')}
                     {...register('father_nationality')}
-                    placeholder="e.g., Ethiopian"
+                    placeholder={t('birth.nationalityPlaceholder')}
                   />
                   <Input
-                    label="Ethnicity"
+                    label={t('birth.ethnicity')}
                     {...register('father_ethnicity')}
-                    placeholder="e.g., Amhara, Oromo"
+                    placeholder={t('birth.ethnicityPlaceholder')}
                   />
                   <Input
-                    label="Religion"
+                    label={t('birth.religion')}
                     {...register('father_religion')}
-                    placeholder="e.g., Orthodox, Muslim"
+                    placeholder={t('birth.religionPlaceholder')}
                   />
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                   <Input
-                    label="Occupation"
+                    label={t('birth.fatherOccupation')}
                     {...register('father_occupation')}
-                    placeholder="e.g., Teacher, Engineer"
+                    placeholder={t('birth.occupationPlaceholder')}
                   />
                   <Input
-                    label="Education"
+                    label={t('birth.education')}
                     {...register('father_education')}
-                    placeholder="e.g., University, Secondary"
+                    placeholder={t('birth.educationPlaceholder')}
                   />
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                   <Input
-                    label="ID Number"
+                    label={t('birth.idNumber')}
                     {...register('father_id_number')}
-                    placeholder="e.g., 123-456-7890"
+                    placeholder={t('birth.idNumberPlaceholder')}
                   />
                   <Input
                     type="tel"
-                    label="Phone Number"
+                    label={t('birth.phoneNumber')}
                     {...register('father_phone')}
-                    placeholder="e.g., 0911234567"
+                    placeholder={t('birth.phoneNumberPlaceholder')}
                   />
                 </div>
 
                 {/* Photo Upload */}
                 <div className="mt-4">
                   <ImageUpload
-                    label="Father Photo"
+                    label={t('birth.fatherPhoto')}
                     value={fatherPhoto}
                     onChange={(file, preview) => {
                       setFatherPhoto(preview);
                     }}
-                    helperText="Upload father's photo (optional)"
+                    helperText={t('birth.uploadFatherPhoto')}
                   />
                 </div>
               </div>
@@ -384,75 +392,75 @@ const BirthRecordForm = ({ isOpen, onClose, record = null, onSuccess }) => {
           {activeTab === 'mother' && (
             <div className="space-y-6">
               <div className="bg-pink-50 p-6 rounded-lg border border-pink-200">
-                <h3 className="text-lg font-semibold mb-4 text-pink-800">Mother Information</h3>
+                <h3 className="text-lg font-semibold mb-4 text-pink-800">{t('birth.motherInfo')}</h3>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <Input
-                    label="Full Name"
+                    label={t('birth.motherName')}
                     {...register('mother_full_name')}
-                    placeholder="Full name"
+                    placeholder={t('birth.fullNamePlaceholder')}
                   />
                   <Input
                     type="date"
-                    label="Date of Birth"
+                    label={t('birth.dateOfBirth')}
                     {...register('mother_date_of_birth')}
                   />
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
                   <Input
-                    label="Nationality"
+                    label={t('birth.motherNationality')}
                     {...register('mother_nationality')}
-                    placeholder="e.g., Ethiopian"
+                    placeholder={t('birth.nationalityPlaceholder')}
                   />
                   <Input
-                    label="Ethnicity"
+                    label={t('birth.ethnicity')}
                     {...register('mother_ethnicity')}
-                    placeholder="e.g., Amhara, Oromo"
+                    placeholder={t('birth.ethnicityPlaceholder')}
                   />
                   <Input
-                    label="Religion"
+                    label={t('birth.religion')}
                     {...register('mother_religion')}
-                    placeholder="e.g., Orthodox, Muslim"
+                    placeholder={t('birth.religionPlaceholder')}
                   />
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                   <Input
-                    label="Occupation"
+                    label={t('birth.motherOccupation')}
                     {...register('mother_occupation')}
-                    placeholder="e.g., Nurse, Teacher"
+                    placeholder={t('birth.motherOccupationPlaceholder')}
                   />
                   <Input
-                    label="Education"
+                    label={t('birth.education')}
                     {...register('mother_education')}
-                    placeholder="e.g., University, Secondary"
+                    placeholder={t('birth.educationPlaceholder')}
                   />
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                   <Input
-                    label="ID Number"
+                    label={t('birth.idNumber')}
                     {...register('mother_id_number')}
-                    placeholder="e.g., 123-456-7890"
+                    placeholder={t('birth.idNumberPlaceholder')}
                   />
                   <Input
                     type="tel"
-                    label="Phone Number"
+                    label={t('birth.phoneNumber')}
                     {...register('mother_phone')}
-                    placeholder="e.g., 0911234567"
+                    placeholder={t('birth.phoneNumberPlaceholder')}
                   />
                 </div>
 
                 {/* Photo Upload */}
                 <div className="mt-4">
                   <ImageUpload
-                    label="Mother Photo"
+                    label={t('birth.motherPhoto')}
                     value={motherPhoto}
                     onChange={(file, preview) => {
                       setMotherPhoto(preview);
                     }}
-                    helperText="Upload mother's photo (optional)"
+                    helperText={t('birth.uploadMotherPhoto')}
                   />
                 </div>
               </div>
@@ -463,62 +471,62 @@ const BirthRecordForm = ({ isOpen, onClose, record = null, onSuccess }) => {
           {activeTab === 'informant' && (
             <div className="space-y-6">
               <div className="bg-purple-50 p-6 rounded-lg border border-purple-200">
-                <h3 className="text-lg font-semibold mb-4 text-purple-800">Informant Information</h3>
+                <h3 className="text-lg font-semibold mb-4 text-purple-800">{t('birth.informantInformation')}</h3>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <Input
-                    label="Informant Name"
+                    label={t('birth.witnessName')}
                     {...register('informant_name')}
-                    placeholder="Full name"
+                    placeholder={t('birth.fullNamePlaceholder')}
                   />
                   <Input
-                    label="Relationship to Child"
+                    label={t('birth.witnessRelation')}
                     {...register('informant_relationship')}
-                    placeholder="e.g., Father, Mother, Guardian"
+                    placeholder={t('birth.relationshipPlaceholder')}
                   />
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                   <Input
-                    label="ID Number"
+                    label={t('birth.idNumber')}
                     {...register('informant_id_number')}
-                    placeholder="e.g., 123-456-7890"
+                    placeholder={t('birth.idNumberPlaceholder')}
                   />
                   <Input
                     type="tel"
-                    label="Phone Number"
+                    label={t('birth.phoneNumber')}
                     {...register('informant_phone')}
-                    placeholder="e.g., 0911234567"
+                    placeholder={t('birth.phoneNumberPlaceholder')}
                   />
                 </div>
 
                 <div className="mt-4">
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Address
+                    {t('birth.address')}
                   </label>
                   <textarea
                     {...register('informant_address')}
                     rows={2}
                     className="block w-full rounded-md border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500 sm:text-sm"
-                    placeholder="Informant's full address..."
+                    placeholder={t('birth.addressPlaceholder')}
                   />
                 </div>
               </div>
 
               {/* Additional Notes */}
               <div className="bg-gray-50 p-6 rounded-lg">
-                <h3 className="text-lg font-semibold mb-4 text-gray-800">Additional Information</h3>
+                <h3 className="text-lg font-semibold mb-4 text-gray-800">{t('birth.additionalInformation')}</h3>
                 
                 <div className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Notes
+                      {t('birth.notes')}
                     </label>
                     <textarea
                       {...register('notes')}
                       rows={4}
                       className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                      placeholder="Any additional notes or remarks..."
+                      placeholder={t('birth.notesPlaceholder')}
                     />
                   </div>
                 </div>
@@ -539,7 +547,7 @@ const BirthRecordForm = ({ isOpen, onClose, record = null, onSuccess }) => {
                 }}
                 className="text-blue-600 hover:text-blue-700 font-medium"
               >
-                ← Previous
+                ← {t('common.previous')}
               </button>
             )}
           </div>
@@ -551,7 +559,7 @@ const BirthRecordForm = ({ isOpen, onClose, record = null, onSuccess }) => {
               onClick={onClose}
               disabled={isSubmitting}
             >
-              Cancel
+              {t('common.cancel')}
             </Button>
             
             {activeTab !== 'informant' ? (
@@ -563,7 +571,7 @@ const BirthRecordForm = ({ isOpen, onClose, record = null, onSuccess }) => {
                 }}
                 className="bg-gradient-to-r from-blue-600 to-blue-700"
               >
-                Next →
+                {t('common.next')} →
               </Button>
             ) : (
               <Button
@@ -571,7 +579,7 @@ const BirthRecordForm = ({ isOpen, onClose, record = null, onSuccess }) => {
                 loading={isSubmitting}
                 className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800"
               >
-                {record ? 'Update Record' : 'Create Record'}
+                {record ? t('birth.updateRecord') : t('birth.createRecord')}
               </Button>
             )}
           </div>

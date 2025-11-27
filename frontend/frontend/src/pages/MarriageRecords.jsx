@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { PlusIcon, MagnifyingGlassIcon, EyeIcon, PencilIcon, TrashIcon, FunnelIcon, ArrowDownTrayIcon } from '@heroicons/react/24/outline';
 import { useAuth } from '../context/AuthContext';
+import { useTranslation } from 'react-i18next';
 import { marriageRecordsAPI } from '../services/api';
 import Button from '../components/common/Button';
 import Input from '../components/common/Input';
@@ -13,6 +14,7 @@ import * as XLSX from 'xlsx';
 
 const MarriageRecords = () => {
   const { user } = useAuth();
+  const { t } = useTranslation();
   const [records, setRecords] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -181,7 +183,7 @@ const MarriageRecords = () => {
   const applyFilters = () => {
     fetchRecords();
     setShowFilters(false);
-    toast.success('Filters applied!');
+    toast.success(t('records.filtersApplied'));
   };
 
   const clearFilters = () => {
@@ -191,19 +193,27 @@ const MarriageRecords = () => {
       dateTo: '',
       region: ''
     });
-    toast.info('Filters cleared!');
+    toast.info(t('records.filtersCleared'));
   };
 
   const getStatusBadge = (status) => {
     const statusStyles = {
       approved: 'badge-success',
       draft: 'badge-warning',
+      pending: 'badge-warning',
       rejected: 'badge-error',
+    };
+    
+    const statusLabels = {
+      approved: t('records.approved'),
+      draft: t('records.draft'),
+      pending: t('records.pending'),
+      rejected: t('records.rejected'),
     };
     
     return (
       <span className={`${statusStyles[status] || 'badge-info'}`}>
-        {status.charAt(0).toUpperCase() + status.slice(1)}
+        {statusLabels[status] || status}
       </span>
     );
   };
@@ -228,10 +238,10 @@ const MarriageRecords = () => {
                 <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center mr-4 shadow-lg">
                   <span className="text-white font-bold text-xl">❤️</span>
                 </div>
-                Marriage Records
+                {t('marriage.title')}
               </h1>
               <p className="text-pink-100 mt-2 text-lg">
-                Manage marriage registration records • {totalRecords.toLocaleString()} total records
+                {t('marriage.manageRecords')} • {totalRecords.toLocaleString()} {t('marriage.totalRecords')}
               </p>
             </div>
             {user?.role !== 'statistician' && (
@@ -240,7 +250,7 @@ const MarriageRecords = () => {
                 className="bg-white text-pink-700 hover:bg-pink-50 font-semibold px-6 py-3 rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200"
               >
                 <PlusIcon className="h-5 w-5 mr-2" />
-                Add Marriage Record
+                {t('marriage.addMarriageRecord')}
               </Button>
             )}
           </div>
@@ -255,7 +265,7 @@ const MarriageRecords = () => {
               <div className="relative">
                 <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
                 <Input
-                  placeholder="Search by name, certificate number..."
+                  placeholder={t('marriage.searchPlaceholder')}
                   value={searchTerm}
                   onChange={handleSearch}
                   className="pl-10 w-full rounded-lg border-gray-300 shadow-sm focus:border-pink-500 focus:ring-pink-500 text-base"
@@ -270,7 +280,7 @@ const MarriageRecords = () => {
                 className="border-2 border-pink-600 text-pink-600 hover:bg-pink-600 hover:text-white font-semibold px-4 py-2 rounded-lg transition-all duration-200"
               >
                 <FunnelIcon className="h-4 w-4 mr-1" />
-                Filter
+                {t('common.filter')}
               </Button>
               <Button 
                 onClick={handleExport}
@@ -279,7 +289,7 @@ const MarriageRecords = () => {
                 className="border-2 border-green-600 text-green-600 hover:bg-green-600 hover:text-white font-semibold px-4 py-2 rounded-lg transition-all duration-200"
               >
                 <ArrowDownTrayIcon className="h-4 w-4 mr-1" />
-                Export
+                {t('common.export')}
               </Button>
             </div>
           </div>
@@ -288,16 +298,16 @@ const MarriageRecords = () => {
         {/* Filter Panel */}
         {showFilters && (
           <Card className="bg-white rounded-2xl shadow-lg border border-gray-200 p-6 mb-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Filter Records</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">{t('records.filterRecords')}</h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Region</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{t('records.region')}</label>
                 <select
                   value={filters.region}
                   onChange={(e) => setFilters({...filters, region: e.target.value})}
                   className="w-full rounded-lg border-gray-300 shadow-sm focus:border-pink-500 focus:ring-pink-500"
                 >
-                  <option value="">All Regions</option>
+                  <option value="">{t('records.allRegions')}</option>
                   <option value="AD">Addis Ababa</option>
                   <option value="AF">Afar</option>
                   <option value="AM">Amhara</option>
@@ -312,21 +322,21 @@ const MarriageRecords = () => {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{t('records.status')}</label>
                 <select
                   value={filters.status}
                   onChange={(e) => setFilters({...filters, status: e.target.value})}
                   className="w-full rounded-lg border-gray-300 shadow-sm focus:border-pink-500 focus:ring-pink-500"
                 >
-                  <option value="">All Status</option>
-                  <option value="approved">Approved</option>
-                  <option value="pending">Pending</option>
-                  <option value="draft">Draft</option>
-                  <option value="rejected">Rejected</option>
+                  <option value="">{t('records.allStatuses')}</option>
+                  <option value="approved">{t('records.approved')}</option>
+                  <option value="pending">{t('records.pending')}</option>
+                  <option value="draft">{t('records.draft')}</option>
+                  <option value="rejected">{t('records.rejected')}</option>
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Date From</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{t('records.dateFrom')}</label>
                 <input
                   type="date"
                   value={filters.dateFrom}
@@ -335,7 +345,7 @@ const MarriageRecords = () => {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Date To</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{t('records.dateTo')}</label>
                 <input
                   type="date"
                   value={filters.dateTo}
@@ -349,14 +359,14 @@ const MarriageRecords = () => {
                 onClick={applyFilters}
                 className="bg-pink-600 text-white hover:bg-pink-700 px-6 py-2 rounded-lg"
               >
-                Apply Filters
+                {t('records.applyFilters')}
               </Button>
               <Button
                 onClick={clearFilters}
                 variant="outline"
                 className="border-gray-300 text-gray-700 hover:bg-gray-50 px-6 py-2 rounded-lg"
               >
-                Clear Filters
+                {t('records.clearFilters')}
               </Button>
             </div>
           </Card>
@@ -367,7 +377,7 @@ const MarriageRecords = () => {
           {loading ? (
             <div className="flex flex-col items-center justify-center py-16">
               <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-pink-600"></div>
-              <p className="mt-4 text-gray-600 font-medium">Loading records...</p>
+              <p className="mt-4 text-gray-600 font-medium">{t('common.loading')}</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -375,25 +385,25 @@ const MarriageRecords = () => {
                 <thead className="bg-gradient-to-r from-gray-50 to-gray-100">
                   <tr>
                     <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
-                      Certificate #
+                      {t('marriage.certificateNumber')}
                     </th>
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Spouse 1
+                      {t('marriage.spouse1')}
                     </th>
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Spouse 2
+                      {t('marriage.spouse2')}
                     </th>
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Marriage Date
+                      {t('marriage.marriageDate')}
                     </th>
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Place
+                      {t('marriage.place')}
                     </th>
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Status
+                      {t('records.status')}
                     </th>
                     <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Actions
+                      {t('records.actions')}
                     </th>
                   </tr>
                 </thead>
@@ -405,14 +415,14 @@ const MarriageRecords = () => {
                           <div className="w-20 h-20 bg-gradient-to-br from-pink-100 to-pink-200 rounded-full flex items-center justify-center mb-4 shadow-md">
                             <span className="text-4xl">❤️</span>
                           </div>
-                          <p className="text-xl font-bold text-gray-900 mb-2">No marriage records found</p>
+                          <p className="text-xl font-bold text-gray-900 mb-2">{t('marriage.noRecordsFound')}</p>
                           <p className="text-sm text-gray-500 mb-4">
-                            {user?.role === 'statistician' ? 'No records available in the database' : 'Start by adding a new marriage record'}
+                            {user?.role === 'statistician' ? t('marriage.noRecordsAvailable') : t('marriage.startByAdding')}
                           </p>
                           {user?.role !== 'statistician' && (
                             <Button onClick={handleAddRecord} className="bg-pink-600 hover:bg-pink-700 text-white font-semibold px-6 py-2 rounded-lg shadow-md">
                               <PlusIcon className="h-5 w-5 mr-2 inline" />
-                              Add First Record
+                              {t('marriage.addFirstRecord')}
                             </Button>
                           )}
                         </div>
@@ -488,7 +498,7 @@ const MarriageRecords = () => {
                     disabled={currentPage === 1}
                     onClick={() => setCurrentPage(currentPage - 1)}
                   >
-                    Previous
+                    {t('common.previous')}
                   </Button>
                   <Button
                     variant="outline"
@@ -496,13 +506,13 @@ const MarriageRecords = () => {
                     disabled={currentPage === totalPages}
                     onClick={() => setCurrentPage(currentPage + 1)}
                   >
-                    Next
+                    {t('common.next')}
                   </Button>
                 </div>
                 <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
                   <div>
                     <p className="text-sm text-gray-700">
-                      Showing page <span className="font-medium">{currentPage}</span> of{' '}
+                      {t('marriage.showingPage')} <span className="font-medium">{currentPage}</span> {t('records.of')}{' '}
                       <span className="font-medium">{totalPages}</span>
                     </p>
                   </div>
@@ -514,7 +524,7 @@ const MarriageRecords = () => {
                         disabled={currentPage === 1}
                         onClick={() => setCurrentPage(currentPage - 1)}
                       >
-                        Previous
+                        {t('common.previous')}
                       </Button>
                       <Button
                         variant="outline"
@@ -523,7 +533,7 @@ const MarriageRecords = () => {
                         onClick={() => setCurrentPage(currentPage + 1)}
                         className="ml-2"
                       >
-                        Next
+                        {t('common.next')}
                       </Button>
                     </nav>
                   </div>

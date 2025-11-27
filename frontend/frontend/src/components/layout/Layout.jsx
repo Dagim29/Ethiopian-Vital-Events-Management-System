@@ -18,7 +18,9 @@ import {
 } from '@heroicons/react/24/outline';
 import { Menu, Transition } from '@headlessui/react';
 import { useAuth } from '../../context/AuthContext';
+import { useTranslation } from 'react-i18next';
 import { Link, useLocation } from 'react-router-dom';
+import LanguageSelector from '../common/LanguageSelector';
 import logo from '../../assets/ethiopia-flag.png';
 
 function classNames(...classes) {
@@ -27,32 +29,33 @@ function classNames(...classes) {
 
 const Layout = ({ children }) => {
   const { user, logout } = useAuth();
+  const { t } = useTranslation();
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // Base navigation items available to all users
   const baseNavigation = [
-    { name: 'Dashboard', href: '/dashboard', icon: HomeIcon, current: location.pathname === '/dashboard' },
-    { name: 'Birth Records', href: '/births', icon: UserGroupIcon, current: location.pathname.startsWith('/births') },
-    { name: 'Death Records', href: '/deaths', icon: DocumentTextIcon, current: location.pathname.startsWith('/deaths') },
-    { name: 'Marriage Records', href: '/marriages', icon: ChartBarIcon, current: location.pathname.startsWith('/marriages') },
-    { name: 'Divorce Records', href: '/divorces', icon: CalendarIcon, current: location.pathname.startsWith('/divorces') },
+    { name: t('nav.dashboard'), href: '/dashboard', icon: HomeIcon, current: location.pathname === '/dashboard' },
+    { name: t('nav.birthRecords'), href: '/births', icon: UserGroupIcon, current: location.pathname.startsWith('/births') },
+    { name: t('nav.deathRecords'), href: '/deaths', icon: DocumentTextIcon, current: location.pathname.startsWith('/deaths') },
+    { name: t('nav.marriageRecords'), href: '/marriages', icon: ChartBarIcon, current: location.pathname.startsWith('/marriages') },
+    { name: t('nav.divorceRecords'), href: '/divorces', icon: CalendarIcon, current: location.pathname.startsWith('/divorces') },
   ];
   
   // Certificates - not available for statisticians (view-only role)
   const certificatesNavigation = user?.role !== 'statistician' ? [
-    { name: 'Certificates', href: '/certificates', icon: DocumentCheckIcon, current: location.pathname.startsWith('/certificates') },
+    { name: t('nav.certificates'), href: '/certificates', icon: DocumentCheckIcon, current: location.pathname.startsWith('/certificates') },
   ] : [];
 
   // Admin-only navigation items
   const adminNavigation = [
-    { name: 'Users', href: '/users', icon: UsersIcon, current: location.pathname.startsWith('/users'), roles: ['admin'] },
-    { name: 'Reports', href: '/admin/reports', icon: DocumentCheckIcon, current: location.pathname.startsWith('/admin/reports'), roles: ['admin'] },
+    { name: t('nav.users'), href: '/users', icon: UsersIcon, current: location.pathname.startsWith('/users'), roles: ['admin'] },
+    { name: t('nav.reports'), href: '/admin/reports', icon: DocumentCheckIcon, current: location.pathname.startsWith('/admin/reports'), roles: ['admin'] },
   ];
 
   // Settings available to all
   const settingsNavigation = [
-    { name: 'Settings', href: '/settings', icon: CogIcon, current: location.pathname.startsWith('/settings') },
+    { name: t('nav.settings'), href: '/settings', icon: CogIcon, current: location.pathname.startsWith('/settings') },
   ];
 
   // Filter navigation based on user role
@@ -64,8 +67,8 @@ const Layout = ({ children }) => {
   ];
   
   const userNavigation = [
-    { name: 'Settings', href: '/settings' },
-    { name: 'Sign out', href: '#', onClick: logout },
+    { name: t('nav.settings'), href: '/settings' },
+    { name: t('nav.logout'), href: '#', onClick: logout },
   ];
 
   const handleLogout = () => {
@@ -77,40 +80,40 @@ const Layout = ({ children }) => {
     switch (user?.role) {
       case 'admin':
         return {
-          title: 'Admin Portal',
-          subtitle: 'System Administration',
+          title: t('roles.adminPortal'),
+          subtitle: t('roles.systemAdministration'),
           bgColor: 'bg-gradient-to-b from-red-600 to-red-700',
           accentColor: 'bg-red-500',
           badgeColor: 'bg-red-100 text-red-800'
         };
       case 'vms_officer':
         return {
-          title: 'VMS Officer',
-          subtitle: 'Records Management',
+          title: t('roles.vmsOfficer'),
+          subtitle: t('roles.recordsManagement'),
           bgColor: 'bg-gradient-to-b from-blue-600 to-blue-700',
           accentColor: 'bg-blue-500',
           badgeColor: 'bg-blue-100 text-blue-800'
         };
       case 'statistician':
         return {
-          title: 'Statistician',
-          subtitle: 'Data Analytics',
+          title: t('roles.statistician'),
+          subtitle: t('roles.dataAnalytics'),
           bgColor: 'bg-gradient-to-b from-purple-600 to-purple-700',
           accentColor: 'bg-purple-500',
           badgeColor: 'bg-purple-100 text-purple-800'
         };
       case 'clerk':
         return {
-          title: 'Clerk Portal',
-          subtitle: 'Data Entry',
+          title: t('roles.clerkPortal'),
+          subtitle: t('roles.dataEntry'),
           bgColor: 'bg-gradient-to-b from-teal-600 to-teal-700',
           accentColor: 'bg-teal-500',
           badgeColor: 'bg-teal-100 text-teal-800'
         };
       default:
         return {
-          title: 'Vital Records',
-          subtitle: 'Management System',
+          title: t('roles.vitalRecords'),
+          subtitle: t('roles.managementSystem'),
           bgColor: 'bg-gradient-to-b from-ethiopia-green to-green-700',
           accentColor: 'bg-ethiopia-yellow',
           badgeColor: 'bg-green-100 text-green-800'
@@ -149,7 +152,7 @@ const Layout = ({ children }) => {
                 </div>
                 <div className="flex items-center gap-2 mt-2 px-3 py-2 bg-white/5 rounded-lg border border-white/10">
                   <div className="h-2 w-2 rounded-full bg-green-400 animate-pulse"></div>
-                  <span className="text-xs text-white/80 font-medium">System Active</span>
+                  <span className="text-xs text-white/80 font-medium">{t('roles.systemActive')}</span>
                 </div>
               </div>
               <nav className="mt-8 space-y-1.5 px-3">
@@ -230,7 +233,7 @@ const Layout = ({ children }) => {
             </div>
             <div className="flex items-center gap-2 mt-2 px-3 py-2 bg-white/5 rounded-lg border border-white/10">
               <div className="h-2 w-2 rounded-full bg-green-400 animate-pulse"></div>
-              <span className="text-xs text-white/80 font-medium">System Active</span>
+              <span className="text-xs text-white/80 font-medium">{t('roles.systemActive')}</span>
             </div>
           </div>
           <div className="flex flex-1 flex-col overflow-y-auto">
@@ -322,6 +325,9 @@ const Layout = ({ children }) => {
               </div>
             </div>
             <div className="ml-6 flex items-center gap-3">
+              {/* Language Selector */}
+              <LanguageSelector />
+              
               {/* Notifications */}
               <button
                 type="button"

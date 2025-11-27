@@ -1,24 +1,42 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Bars3Icon, XMarkIcon, UserIcon } from '@heroicons/react/24/outline';
+import { Bars3Icon, XMarkIcon, UserIcon, LanguageIcon } from '@heroicons/react/24/outline';
 import { useAuth } from '../../context/AuthContext';
+import { useTranslation } from 'react-i18next';
 import Button from '../common/Button';
 import LoginModal from '../auth/LoginModal';
 import RegisterModal from '../auth/RegisterModal';
 
 const Header = () => {
   const { isAuthenticated, user, logout } = useAuth();
+  const { i18n, t } = useTranslation();
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [loginModalOpen, setLoginModalOpen] = useState(false);
   const [registerModalOpen, setRegisterModalOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [langMenuOpen, setLangMenuOpen] = useState(false);
+
+  const languages = [
+    { code: 'en', name: 'English', flag: '🇬🇧' },
+    { code: 'am', name: 'አማርኛ', flag: '🇪🇹' },
+    { code: 'om', name: 'Afaan Oromoo', flag: '🇪🇹' },
+    { code: 'ti', name: 'ትግርኛ', flag: '🇪🇹' }
+  ];
+
+  const currentLanguage = languages.find(lang => lang.code === i18n.language) || languages[0];
+
+  const changeLanguage = (langCode) => {
+    i18n.changeLanguage(langCode);
+    setLangMenuOpen(false);
+    localStorage.setItem('language', langCode);
+  };
 
   const navigation = [
-    { name: 'Home', href: '#home' },
-    { name: 'Features', href: '#features' },
-    { name: 'About', href: '#about' },
-    { name: 'Contact', href: '#contact' },
+    { name: t('header.home'), href: '#home' },
+    { name: t('header.features'), href: '#features' },
+    { name: t('header.about'), href: '#about' },
+    { name: t('header.contact'), href: '#contact' },
   ];
 
   const handleLogout = () => {
@@ -45,8 +63,8 @@ const Header = () => {
                 </div>
               </div>
               <div className="ml-4">
-                <h1 className="text-xl font-bold text-gray-900 group-hover:text-green-700 transition-colors">Vital Management System</h1>
-                <p className="text-xs text-gray-600 font-medium">🇪🇹 Ethiopian Government</p>
+                <h1 className="text-xl font-bold text-gray-900 group-hover:text-green-700 transition-colors">{t('header.title')}</h1>
+                <p className="text-xs text-gray-600 font-medium">🇪🇹 {t('header.subtitle')}</p>
               </div>
             </Link>
 
@@ -65,6 +83,38 @@ const Header = () => {
 
             {/* Desktop Auth Section */}
             <div className="hidden md:flex md:items-center md:space-x-3">
+              {/* Language Selector */}
+              <div className="relative">
+                <button
+                  onClick={() => setLangMenuOpen(!langMenuOpen)}
+                  className="flex items-center space-x-2 px-4 py-2.5 rounded-lg bg-gray-50 hover:bg-gray-100 border border-gray-200 transition-all duration-200"
+                  title={t('header.changeLanguage')}
+                >
+                  <LanguageIcon className="h-5 w-5 text-gray-600" />
+                  <span className="text-sm font-semibold text-gray-700">{currentLanguage.flag} {currentLanguage.name}</span>
+                </button>
+
+                {/* Language Dropdown */}
+                {langMenuOpen && (
+                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-2xl border border-gray-200 py-2 z-50">
+                    {languages.map((lang) => (
+                      <button
+                        key={lang.code}
+                        onClick={() => changeLanguage(lang.code)}
+                        className={`w-full text-left px-4 py-2.5 text-sm font-medium transition-colors ${
+                          i18n.language === lang.code
+                            ? 'bg-green-50 text-green-700 font-bold'
+                            : 'text-gray-700 hover:bg-gray-50'
+                        }`}
+                      >
+                        <span className="mr-2">{lang.flag}</span>
+                        {lang.name}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
               {isAuthenticated ? (
                 <div className="relative">
                   <button
@@ -93,21 +143,21 @@ const Header = () => {
                         className="block px-5 py-3 text-sm font-semibold text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors"
                         onClick={() => setUserMenuOpen(false)}
                       >
-                        📊 Dashboard
+                        📊 {t('header.dashboard')}
                       </Link>
-                      <Link
+                      {/* <Link
                         to="/births"
                         className="block px-5 py-3 text-sm font-semibold text-gray-700 hover:bg-green-50 hover:text-green-700 transition-colors"
                         onClick={() => setUserMenuOpen(false)}
                       >
                         📋 Birth Records
-                      </Link>
+                      </Link> */}
                       <div className="border-t-2 border-gray-100 mt-2 pt-2">
                         <button
                           onClick={handleLogout}
                           className="block w-full text-left px-5 py-3 text-sm font-bold text-red-600 hover:bg-red-50 transition-colors rounded-b-2xl"
                         >
-                          🚪 Sign out
+                          🚪 {t('header.signOut')}
                         </button>
                       </div>
                     </div>
@@ -118,7 +168,7 @@ const Header = () => {
                   onClick={() => setLoginModalOpen(true)}
                   className="px-6 py-2.5 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-bold rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 transform hover:-translate-y-0.5"
                 >
-                  Sign In
+                  {t('header.signIn')}
                 </button>
               )}
             </div>
@@ -130,7 +180,7 @@ const Header = () => {
                 className="text-gray-700 hover:text-primary-600"
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               >
-                <span className="sr-only">Open main menu</span>
+                <span className="sr-only">{t('header.openMenu')}</span>
                 {mobileMenuOpen ? (
                   <XMarkIcon className="h-6 w-6" />
                 ) : (
@@ -154,7 +204,32 @@ const Header = () => {
                     {item.name}
                   </a>
                 ))}
-                <div className="pt-4 space-y-2">
+                
+                {/* Mobile Language Selector */}
+                <div className="pt-4 pb-2 border-t border-gray-200">
+                  <p className="px-3 py-2 text-xs font-bold text-gray-500 uppercase">{t('header.language')}</p>
+                  <div className="space-y-1">
+                    {languages.map((lang) => (
+                      <button
+                        key={lang.code}
+                        onClick={() => {
+                          changeLanguage(lang.code);
+                          setMobileMenuOpen(false);
+                        }}
+                        className={`w-full text-left px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+                          i18n.language === lang.code
+                            ? 'bg-green-50 text-green-700 font-bold'
+                            : 'text-gray-700 hover:bg-gray-100'
+                        }`}
+                      >
+                        <span className="mr-2">{lang.flag}</span>
+                        {lang.name}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="pt-4 space-y-2 border-t border-gray-200">
                   {isAuthenticated ? (
                     <>
                       <div className="px-3 py-2">
@@ -166,7 +241,7 @@ const Header = () => {
                         className="block w-full text-left px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-md"
                         onClick={() => setMobileMenuOpen(false)}
                       >
-                        Dashboard
+                        {t('header.dashboard')}
                       </Link>
                       <button
                         onClick={() => {
@@ -175,7 +250,7 @@ const Header = () => {
                         }}
                         className="block w-full text-left px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-md"
                       >
-                        Sign out
+                        {t('header.signOut')}
                       </button>
                     </>
                   ) : (
@@ -186,7 +261,7 @@ const Header = () => {
                         setMobileMenuOpen(false);
                       }}
                     >
-                      Sign In
+                      {t('header.signIn')}
                     </button>
                   )}
                 </div>

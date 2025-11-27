@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { PlusIcon, MagnifyingGlassIcon, EyeIcon, PencilIcon, TrashIcon, UserPlusIcon, FunnelIcon, ArrowDownTrayIcon } from '@heroicons/react/24/outline';
+import { useState, useEffect } from 'react';
+import { MagnifyingGlassIcon, EyeIcon, PencilIcon, TrashIcon, UserPlusIcon, FunnelIcon, ArrowDownTrayIcon } from '@heroicons/react/24/outline';
 import { useAuth } from '../../context/AuthContext';
 import { usersAPI } from '../../services/api';
 import Button from '../../components/common/Button';
@@ -9,9 +9,11 @@ import UserForm from '../../components/admin/UserForm';
 import { format } from 'date-fns';
 import { toast } from 'react-toastify';
 import * as XLSX from 'xlsx';
+import { useTranslation } from 'react-i18next';
 
 const UserManagement = () => {
   const { user } = useAuth();
+  const { t } = useTranslation();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -39,7 +41,7 @@ const UserManagement = () => {
       }
     } catch (error) {
       console.error('Error fetching users:', error);
-      toast.error('Failed to load users');
+      toast.error(t('users.failedToLoad'));
       setUsers([]);
     } finally {
       setLoading(false);
@@ -47,14 +49,14 @@ const UserManagement = () => {
   };
 
   const handleDeleteUser = async (id) => {
-    if (window.confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
+    if (window.confirm(t('users.deleteConfirm'))) {
       try {
         await usersAPI.deleteUser(id);
-        toast.success('User deleted successfully');
+        toast.success(t('users.userDeleted'));
         fetchUsers();
       } catch (error) {
         console.error('Error deleting user:', error);
-        toast.error('Failed to delete user');
+        toast.error(t('users.failedToDelete'));
       }
     }
   };
@@ -107,16 +109,16 @@ const UserManagement = () => {
       const filename = `Users_${format(new Date(), 'yyyy-MM-dd')}.xlsx`;
       XLSX.writeFile(wb, filename);
       
-      toast.success(`Exported ${exportData.length} users successfully!`);
+      toast.success(t('users.exportSuccess', { count: exportData.length }));
     } catch (error) {
       console.error('Error exporting users:', error);
-      toast.error('Failed to export users. Please try again.');
+      toast.error(t('users.exportFailed'));
     }
   };
 
   const clearRoleFilter = () => {
     setRoleFilter('');
-    toast.info('Filter cleared!');
+    toast.info(t('users.filterCleared'));
   };
 
   const getRoleBadge = (role) => {
@@ -137,7 +139,7 @@ const UserManagement = () => {
   const getStatusBadge = (isActive) => {
     return (
       <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-        {isActive ? 'Active' : 'Inactive'}
+        {isActive ? t('users.active') : t('users.inactive')}
       </span>
     );
   };
@@ -166,8 +168,8 @@ const UserManagement = () => {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900 mb-4">Access Denied</h1>
-          <p className="text-gray-600">You don't have permission to access this page.</p>
+          <h1 className="text-2xl font-bold text-gray-900 mb-4">{t('users.accessDenied')}</h1>
+          <p className="text-gray-600">{t('users.noPermission')}</p>
         </div>
       </div>
     );
@@ -184,10 +186,10 @@ const UserManagement = () => {
                 <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center mr-4 shadow-lg">
                   <span className="text-white font-bold text-xl">👥</span>
                 </div>
-                User Management
+                {t('users.title')}
               </h1>
               <p className="text-purple-100 mt-2 text-lg">
-                Manage system users and permissions • {users.length} total users
+                {t('users.description')} • {users.length} {t('users.totalUsers')}
               </p>
             </div>
             <Button 
@@ -195,7 +197,7 @@ const UserManagement = () => {
               className="bg-white text-purple-700 hover:bg-purple-50 font-semibold px-6 py-3 rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200"
             >
               <UserPlusIcon className="h-5 w-5 mr-2" />
-              Add User
+              {t('users.addUser')}
             </Button>
           </div>
         </div>
@@ -209,7 +211,7 @@ const UserManagement = () => {
               <div className="relative">
                 <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
                 <Input
-                  placeholder="Search by name, email, badge number..."
+                  placeholder={t('users.searchPlaceholder')}
                   value={searchTerm}
                   onChange={handleSearch}
                   className="pl-10 w-full rounded-lg border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500 text-base"
@@ -224,7 +226,7 @@ const UserManagement = () => {
                 className="border-2 border-purple-600 text-purple-600 hover:bg-purple-600 hover:text-white font-semibold px-4 py-2 rounded-lg transition-all duration-200"
               >
                 <FunnelIcon className="h-4 w-4 mr-1" />
-                Filter by Role
+                {t('users.filterByRole')}
               </Button>
               <Button 
                 onClick={handleExport}
@@ -233,7 +235,7 @@ const UserManagement = () => {
                 className="border-2 border-green-600 text-green-600 hover:bg-green-600 hover:text-white font-semibold px-4 py-2 rounded-lg transition-all duration-200"
               >
                 <ArrowDownTrayIcon className="h-4 w-4 mr-1" />
-                Export Users
+                {t('users.exportUsers')}
               </Button>
             </div>
           </div>
@@ -242,20 +244,20 @@ const UserManagement = () => {
         {/* Filter Panel */}
         {showFilters && (
           <Card className="bg-white rounded-2xl shadow-lg border border-gray-200 p-6 mb-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Filter by Role</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">{t('users.filterByRole')}</h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Role</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{t('users.role')}</label>
                 <select
                   value={roleFilter}
                   onChange={(e) => setRoleFilter(e.target.value)}
                   className="w-full rounded-lg border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500"
                 >
-                  <option value="">All Roles</option>
-                  <option value="admin">Admin</option>
-                  <option value="vms_officer">VMS Officer</option>
-                  <option value="clerk">Clerk</option>
-                  <option value="statistician">Statistician</option>
+                  <option value="">{t('users.allRoles')}</option>
+                  <option value="admin">{t('users.admin')}</option>
+                  <option value="vms_officer">{t('users.vmsOfficer')}</option>
+                  <option value="clerk">{t('users.clerk')}</option>
+                  <option value="statistician">{t('users.statistician')}</option>
                 </select>
               </div>
             </div>
@@ -265,7 +267,7 @@ const UserManagement = () => {
                 variant="outline"
                 className="border-gray-300 text-gray-700 hover:bg-gray-50 px-6 py-2 rounded-lg"
               >
-                Clear Filter
+                {t('users.clearFilter')}
               </Button>
             </div>
           </Card>
@@ -276,7 +278,7 @@ const UserManagement = () => {
           {loading ? (
             <div className="flex flex-col items-center justify-center py-16">
               <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-purple-600"></div>
-              <p className="mt-4 text-gray-600 font-medium">Loading users...</p>
+              <p className="mt-4 text-gray-600 font-medium">{t('users.loadingUsers')}</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -284,25 +286,25 @@ const UserManagement = () => {
                 <thead className="bg-gradient-to-r from-gray-50 to-gray-100">
                   <tr>
                     <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
-                      User
+                      {t('users.user')}
                     </th>
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Email
+                      {t('users.email')}
                     </th>
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Role
+                      {t('users.role')}
                     </th>
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Region
+                      {t('users.region')}
                     </th>
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Status
+                      {t('users.status')}
                     </th>
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Last Login
+                      {t('users.lastLogin')}
                     </th>
                     <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Actions
+                      {t('users.actions')}
                     </th>
                   </tr>
                 </thead>
@@ -314,11 +316,11 @@ const UserManagement = () => {
                           <div className="w-20 h-20 bg-gradient-to-br from-purple-100 to-purple-200 rounded-full flex items-center justify-center mb-4 shadow-md">
                             <span className="text-4xl">👥</span>
                           </div>
-                          <p className="text-xl font-bold text-gray-900 mb-2">{searchTerm ? 'No users found matching your search' : 'No users found'}</p>
-                          <p className="text-sm text-gray-500 mb-4">Start by adding a new user to the system</p>
+                          <p className="text-xl font-bold text-gray-900 mb-2">{searchTerm ? t('users.noUsersMatchingSearch') : t('users.noUsersFound')}</p>
+                          <p className="text-sm text-gray-500 mb-4">{t('users.startByAdding')}</p>
                           <Button onClick={handleAddUser} className="bg-purple-600 hover:bg-purple-700 text-white font-semibold px-6 py-2 rounded-lg shadow-md">
                             <UserPlusIcon className="h-5 w-5 mr-2 inline" />
-                            Add First User
+                            {t('users.addFirstUser')}
                           </Button>
                         </div>
                       </td>
@@ -425,7 +427,7 @@ const UserManagement = () => {
         <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 max-w-3xl w-full mx-4 max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-6">
-              <h3 className="text-2xl font-bold text-gray-900">User Details</h3>
+              <h3 className="text-2xl font-bold text-gray-900">{t('users.userDetails')}</h3>
               <button
                 onClick={() => setIsViewOpen(false)}
                 className="text-gray-400 hover:text-gray-600"
@@ -448,79 +450,79 @@ const UserManagement = () => {
             {/* User Information Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <label className="block text-sm font-medium text-gray-500">Full Name</label>
+                <label className="block text-sm font-medium text-gray-500">{t('users.fullName')}</label>
                 <p className="mt-1 text-lg font-semibold text-gray-900">{selectedUser.full_name}</p>
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-500">Email</label>
+                <label className="block text-sm font-medium text-gray-500">{t('users.email')}</label>
                 <p className="mt-1 text-lg text-gray-900">{selectedUser.email}</p>
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-500">Role</label>
+                <label className="block text-sm font-medium text-gray-500">{t('users.role')}</label>
                 <p className="mt-1">{getRoleBadge(selectedUser.role)}</p>
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-500">Badge Number</label>
+                <label className="block text-sm font-medium text-gray-500">{t('users.badgeNumber')}</label>
                 <p className="mt-1 text-lg text-gray-900">{selectedUser.badge_number || 'N/A'}</p>
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-500">Department</label>
+                <label className="block text-sm font-medium text-gray-500">{t('users.department')}</label>
                 <p className="mt-1 text-lg text-gray-900">{selectedUser.department || 'N/A'}</p>
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-500">Phone</label>
+                <label className="block text-sm font-medium text-gray-500">{t('users.phone')}</label>
                 <p className="mt-1 text-lg text-gray-900">{selectedUser.phone || 'N/A'}</p>
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-500">Region</label>
+                <label className="block text-sm font-medium text-gray-500">{t('users.region')}</label>
                 <p className="mt-1 text-lg text-gray-900">{selectedUser.region || 'N/A'}</p>
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-500">Zone</label>
+                <label className="block text-sm font-medium text-gray-500">{t('users.zone')}</label>
                 <p className="mt-1 text-lg text-gray-900">{selectedUser.zone || 'N/A'}</p>
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-500">Woreda</label>
+                <label className="block text-sm font-medium text-gray-500">{t('users.woreda')}</label>
                 <p className="mt-1 text-lg text-gray-900">{selectedUser.woreda || 'N/A'}</p>
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-500">Kebele</label>
+                <label className="block text-sm font-medium text-gray-500">{t('users.kebele')}</label>
                 <p className="mt-1 text-lg text-gray-900">{selectedUser.kebele || 'N/A'}</p>
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-500">Office Name</label>
+                <label className="block text-sm font-medium text-gray-500">{t('users.officeName')}</label>
                 <p className="mt-1 text-lg text-gray-900">{selectedUser.office_name || 'N/A'}</p>
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-500">Status</label>
+                <label className="block text-sm font-medium text-gray-500">{t('users.status')}</label>
                 <p className="mt-1">{getStatusBadge(selectedUser.is_active)}</p>
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-500">Last Login</label>
+                <label className="block text-sm font-medium text-gray-500">{t('users.lastLogin')}</label>
                 <p className="mt-1 text-lg text-gray-900">{formatDate(selectedUser.last_login)}</p>
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-500">Created At</label>
+                <label className="block text-sm font-medium text-gray-500">{t('users.createdAt')}</label>
                 <p className="mt-1 text-lg text-gray-900">{formatDate(selectedUser.created_at)}</p>
               </div>
             </div>
             
             <div className="mt-6 flex justify-end space-x-3">
               <Button variant="outline" onClick={() => setIsViewOpen(false)}>
-                Close
+                {t('users.close')}
               </Button>
             </div>
           </div>

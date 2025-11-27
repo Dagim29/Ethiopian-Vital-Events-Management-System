@@ -24,9 +24,11 @@ import {
 } from '@heroicons/react/24/outline';
 import Card from '../../components/common/Card';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 const ClerkDashboard = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [timeFilter, setTimeFilter] = useState('week'); // week, month, all
   
   const { data: stats, isLoading } = useQuery({
@@ -96,10 +98,10 @@ const ClerkDashboard = () => {
                 <div className="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center mr-4 shadow-lg">
                   <PencilSquareIcon className="h-8 w-8 text-white" />
                 </div>
-                Clerk Dashboard
+                {t('clerk.title')}
               </h1>
               <p className="text-teal-100 mt-2 text-lg">
-                Data Entry & Record Management • {stats?.myRecords || 0} Records Created
+                {t('clerk.description')} • {stats?.myRecords || 0} {t('clerk.recordsCreated')}
               </p>
             </div>
             <div className="flex gap-3">
@@ -108,7 +110,7 @@ const ClerkDashboard = () => {
                 className="bg-white text-teal-700 hover:bg-teal-50 font-semibold px-6 py-3 rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200"
               >
                 <PlusCircleIcon className="h-5 w-5 mr-2 inline" />
-                New Record
+                {t('clerk.newRecord')}
               </button>
             </div>
           </div>
@@ -121,9 +123,9 @@ const ClerkDashboard = () => {
           <div className="bg-gradient-to-br from-teal-500 to-teal-600 rounded-2xl shadow-xl p-6 text-white transform hover:scale-105 transition-all duration-200">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-teal-100 text-sm font-medium uppercase tracking-wide">My Records</p>
+                <p className="text-teal-100 text-sm font-medium uppercase tracking-wide">{t('clerk.myRecords')}</p>
                 <p className="text-4xl font-bold mt-2">{stats?.myRecords || 0}</p>
-                <p className="text-teal-100 text-xs mt-2">Total created</p>
+                <p className="text-teal-100 text-xs mt-2">{t('clerk.totalCreated')}</p>
               </div>
               <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4">
                 <DocumentTextIcon className="h-10 w-10" />
@@ -134,9 +136,9 @@ const ClerkDashboard = () => {
           <div className="bg-gradient-to-br from-yellow-500 to-orange-500 rounded-2xl shadow-xl p-6 text-white transform hover:scale-105 transition-all duration-200">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-yellow-100 text-sm font-medium uppercase tracking-wide">My Births</p>
+                <p className="text-yellow-100 text-sm font-medium uppercase tracking-wide">{t('clerk.myBirths')}</p>
                 <p className="text-4xl font-bold mt-2">{stats?.myBirths || 0}</p>
-                <p className="text-yellow-100 text-xs mt-2">Birth records created</p>
+                <p className="text-yellow-100 text-xs mt-2">{t('clerk.birthRecordsCreated')}</p>
               </div>
               <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4">
                 <CakeIcon className="h-10 w-10" />
@@ -147,9 +149,9 @@ const ClerkDashboard = () => {
           <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-2xl shadow-xl p-6 text-white transform hover:scale-105 transition-all duration-200">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-green-100 text-sm font-medium uppercase tracking-wide">My Deaths</p>
+                <p className="text-green-100 text-sm font-medium uppercase tracking-wide">{t('clerk.myDeaths')}</p>
                 <p className="text-4xl font-bold mt-2">{stats?.myDeaths || 0}</p>
-                <p className="text-green-100 text-xs mt-2">Death records created</p>
+                <p className="text-green-100 text-xs mt-2">{t('clerk.deathRecordsCreated')}</p>
               </div>
               <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4">
                 <FaceFrownIcon className="h-10 w-10" />
@@ -160,9 +162,9 @@ const ClerkDashboard = () => {
           <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl shadow-xl p-6 text-white transform hover:scale-105 transition-all duration-200">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-blue-100 text-sm font-medium uppercase tracking-wide">My Marriages</p>
+                <p className="text-blue-100 text-sm font-medium uppercase tracking-wide">{t('clerk.myMarriages')}</p>
                 <p className="text-4xl font-bold mt-2">{stats?.myMarriages || 0}</p>
-                <p className="text-blue-100 text-xs mt-2">Marriage records created</p>
+                <p className="text-blue-100 text-xs mt-2">{t('clerk.marriageRecordsCreated')}</p>
               </div>
               <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4">
                 <HeartIcon className="h-10 w-10" />
@@ -175,7 +177,7 @@ const ClerkDashboard = () => {
         <div className="bg-white rounded-2xl shadow-xl p-6">
           <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center">
             <PlusCircleIcon className="h-7 w-7 mr-3 text-teal-600" />
-            Quick Actions - Create New Records
+            {t('clerk.quickActions')}
           </h2>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <button
@@ -184,8 +186,8 @@ const ClerkDashboard = () => {
               className="group relative inline-flex flex-col items-center justify-center px-6 py-8 border-2 border-pink-300 text-sm font-semibold rounded-xl shadow-md text-pink-700 bg-gradient-to-br from-pink-50 to-pink-100 hover:from-pink-600 hover:to-pink-700 hover:text-white hover:border-pink-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-pink-500 transition-all duration-200 transform hover:scale-105"
             >
               <CakeIcon className="h-12 w-12 mb-3" />
-              <span className="text-base">Register Birth</span>
-              <span className="text-xs mt-1 opacity-75">Create new birth record</span>
+              <span className="text-base">{t('clerk.registerBirth')}</span>
+              <span className="text-xs mt-1 opacity-75">{t('clerk.createNewBirthRecord')}</span>
             </button>
             
             <button
@@ -194,8 +196,8 @@ const ClerkDashboard = () => {
               className="group relative inline-flex flex-col items-center justify-center px-6 py-8 border-2 border-gray-300 text-sm font-semibold rounded-xl shadow-md text-gray-700 bg-gradient-to-br from-gray-50 to-gray-100 hover:from-gray-600 hover:to-gray-700 hover:text-white hover:border-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-all duration-200 transform hover:scale-105"
             >
               <FaceFrownIcon className="h-12 w-12 mb-3" />
-              <span className="text-base">Register Death</span>
-              <span className="text-xs mt-1 opacity-75">Create new death record</span>
+              <span className="text-base">{t('clerk.registerDeath')}</span>
+              <span className="text-xs mt-1 opacity-75">{t('clerk.createNewDeathRecord')}</span>
             </button>
             
             <button
@@ -204,8 +206,8 @@ const ClerkDashboard = () => {
               className="group relative inline-flex flex-col items-center justify-center px-6 py-8 border-2 border-red-300 text-sm font-semibold rounded-xl shadow-md text-red-700 bg-gradient-to-br from-red-50 to-red-100 hover:from-red-600 hover:to-red-700 hover:text-white hover:border-red-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-all duration-200 transform hover:scale-105"
             >
               <HeartIcon className="h-12 w-12 mb-3" />
-              <span className="text-base">Register Marriage</span>
-              <span className="text-xs mt-1 opacity-75">Create new marriage record</span>
+              <span className="text-base">{t('clerk.registerMarriage')}</span>
+              <span className="text-xs mt-1 opacity-75">{t('clerk.createNewMarriageRecord')}</span>
             </button>
             
             <button
@@ -214,8 +216,8 @@ const ClerkDashboard = () => {
               className="group relative inline-flex flex-col items-center justify-center px-6 py-8 border-2 border-orange-300 text-sm font-semibold rounded-xl shadow-md text-orange-700 bg-gradient-to-br from-orange-50 to-orange-100 hover:from-orange-600 hover:to-orange-700 hover:text-white hover:border-orange-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 transition-all duration-200 transform hover:scale-105"
             >
               <XCircleIconOutline className="h-12 w-12 mb-3" />
-              <span className="text-base">Register Divorce</span>
-              <span className="text-xs mt-1 opacity-75">Create new divorce record</span>
+              <span className="text-base">{t('clerk.registerDivorce')}</span>
+              <span className="text-xs mt-1 opacity-75">{t('clerk.createNewDivorceRecord')}</span>
             </button>
           </div>
         </div>
@@ -226,13 +228,13 @@ const ClerkDashboard = () => {
           <Card className="p-6">
             <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
               <ChartBarIcon className="h-6 w-6 mr-2 text-teal-600" />
-              My Records by Type
+              {t('clerk.myRecordsByType')}
             </h2>
             <div className="space-y-4">
               <div className="flex justify-between items-center p-3 bg-pink-50 rounded-lg border border-pink-200">
                 <div className="flex items-center">
                   <CakeIcon className="h-5 w-5 text-pink-600 mr-2" />
-                  <span className="text-sm font-medium text-gray-700">Birth Records</span>
+                  <span className="text-sm font-medium text-gray-700">{t('birth.birthRecords')}</span>
                 </div>
                 <span className="text-lg font-bold text-pink-600">{stats?.myBirths || 0}</span>
               </div>
@@ -240,7 +242,7 @@ const ClerkDashboard = () => {
               <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg border border-gray-200">
                 <div className="flex items-center">
                   <FaceFrownIcon className="h-5 w-5 text-gray-600 mr-2" />
-                  <span className="text-sm font-medium text-gray-700">Death Records</span>
+                  <span className="text-sm font-medium text-gray-700">{t('death.deathRecords')}</span>
                 </div>
                 <span className="text-lg font-bold text-gray-600">{stats?.myDeaths || 0}</span>
               </div>
@@ -248,7 +250,7 @@ const ClerkDashboard = () => {
               <div className="flex justify-between items-center p-3 bg-red-50 rounded-lg border border-red-200">
                 <div className="flex items-center">
                   <HeartIcon className="h-5 w-5 text-red-600 mr-2" />
-                  <span className="text-sm font-medium text-gray-700">Marriage Records</span>
+                  <span className="text-sm font-medium text-gray-700">{t('marriage.marriageRecords')}</span>
                 </div>
                 <span className="text-lg font-bold text-red-600">{stats?.myMarriages || 0}</span>
               </div>
@@ -256,7 +258,7 @@ const ClerkDashboard = () => {
               <div className="flex justify-between items-center p-3 bg-orange-50 rounded-lg border border-orange-200">
                 <div className="flex items-center">
                   <XCircleIconOutline className="h-5 w-5 text-orange-600 mr-2" />
-                  <span className="text-sm font-medium text-gray-700">Divorce Records</span>
+                  <span className="text-sm font-medium text-gray-700">{t('divorce.divorceRecords')}</span>
                 </div>
                 <span className="text-lg font-bold text-orange-600">{stats?.myDivorces || 0}</span>
               </div>
@@ -267,38 +269,38 @@ const ClerkDashboard = () => {
           <Card className="p-6">
             <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
               <ClipboardDocumentCheckIcon className="h-6 w-6 mr-2 text-teal-600" />
-              My Tasks & Responsibilities
+              {t('clerk.myTasks')}
             </h2>
             <div className="space-y-3">
               <div className="flex items-start p-3 bg-teal-50 rounded-lg border border-teal-200">
                 <CheckCircleIcon className="h-5 w-5 text-teal-600 mr-2 mt-0.5" />
                 <div>
-                  <p className="text-sm font-medium text-gray-900">Data Entry</p>
-                  <p className="text-xs text-gray-600">Create and submit vital records</p>
+                  <p className="text-sm font-medium text-gray-900">{t('clerk.dataEntry')}</p>
+                  <p className="text-xs text-gray-600">{t('clerk.createAndSubmitRecords')}</p>
                 </div>
               </div>
               
               <div className="flex items-start p-3 bg-blue-50 rounded-lg border border-blue-200">
                 <DocumentTextIcon className="h-5 w-5 text-blue-600 mr-2 mt-0.5" />
                 <div>
-                  <p className="text-sm font-medium text-gray-900">View My Records</p>
-                  <p className="text-xs text-gray-600">Access records you created</p>
+                  <p className="text-sm font-medium text-gray-900">{t('clerk.viewMyRecords')}</p>
+                  <p className="text-xs text-gray-600">{t('clerk.accessRecordsYouCreated')}</p>
                 </div>
               </div>
               
               <div className="flex items-start p-3 bg-yellow-50 rounded-lg border border-yellow-200">
                 <ClockIcon className="h-5 w-5 text-yellow-600 mr-2 mt-0.5" />
                 <div>
-                  <p className="text-sm font-medium text-gray-900">Pending Approval</p>
-                  <p className="text-xs text-gray-600">Wait for officer approval</p>
+                  <p className="text-sm font-medium text-gray-900">{t('clerk.pendingApproval')}</p>
+                  <p className="text-xs text-gray-600">{t('clerk.waitForOfficerApproval')}</p>
                 </div>
               </div>
               
               <div className="flex items-start p-3 bg-purple-50 rounded-lg border border-purple-200">
                 <PencilSquareIcon className="h-5 w-5 text-purple-600 mr-2 mt-0.5" />
                 <div>
-                  <p className="text-sm font-medium text-gray-900">Update Profile</p>
-                  <p className="text-xs text-gray-600">Manage your account settings</p>
+                  <p className="text-sm font-medium text-gray-900">{t('clerk.updateProfile')}</p>
+                  <p className="text-xs text-gray-600">{t('clerk.manageAccountSettings')}</p>
                 </div>
               </div>
             </div>
@@ -312,25 +314,25 @@ const ClerkDashboard = () => {
             <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center justify-between">
               <div className="flex items-center">
                 <ClockIcon className="h-6 w-6 mr-2 text-teal-600" />
-                Recent Records
+                {t('clerk.recentRecords')}
               </div>
               <button
                 onClick={() => navigate('/births')}
                 className="text-sm text-teal-600 hover:text-teal-700 font-medium"
               >
-                View All →
+                {t('clerk.viewAll')} →
               </button>
             </h2>
             <div className="space-y-3">
               {loadingRecords ? (
                 <div className="text-center py-8">
                   <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-teal-600 mx-auto"></div>
-                  <p className="text-sm text-gray-500 mt-2">Loading records...</p>
+                  <p className="text-sm text-gray-500 mt-2">{t('clerk.loadingRecords')}</p>
                 </div>
               ) : recordsError ? (
                 <div className="text-center py-8 text-gray-500">
                   <XCircleIcon className="h-12 w-12 mx-auto mb-2 text-red-400" />
-                  <p className="text-sm text-red-600">Error loading records</p>
+                  <p className="text-sm text-red-600">{t('clerk.errorLoadingRecords')}</p>
                   <p className="text-xs mt-1 text-gray-500">{recordsError.message}</p>
                 </div>
               ) : recentRecords && recentRecords.length > 0 ? (
@@ -360,7 +362,7 @@ const ClerkDashboard = () => {
                       <button
                         onClick={() => navigate(`/${record.type}s`)}
                         className="ml-2 text-gray-400 hover:text-gray-600"
-                        title="View Record"
+                        title={t('clerk.viewRecord')}
                       >
                         <EyeIcon className="h-5 w-5" />
                       </button>
@@ -370,8 +372,8 @@ const ClerkDashboard = () => {
               ) : (
                 <div className="text-center py-8 text-gray-500">
                   <DocumentTextIcon className="h-12 w-12 mx-auto mb-2 text-gray-400" />
-                  <p className="text-sm">No records created yet</p>
-                  <p className="text-xs mt-1">Start by creating your first record</p>
+                  <p className="text-sm">{t('clerk.noRecordsCreated')}</p>
+                  <p className="text-xs mt-1">{t('clerk.startByCreating')}</p>
                 </div>
               )}
             </div>
@@ -381,7 +383,7 @@ const ClerkDashboard = () => {
           <Card className="p-6">
             <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
               <TrophyIcon className="h-6 w-6 mr-2 text-teal-600" />
-              My Performance
+              {t('clerk.myPerformance')}
             </h2>
             <div className="space-y-4">
               <div className="flex items-center justify-between p-4 bg-gradient-to-r from-teal-50 to-cyan-50 rounded-lg border border-teal-200">
@@ -390,8 +392,8 @@ const ClerkDashboard = () => {
                     <ArrowTrendingUpIcon className="h-6 w-6 text-teal-600" />
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-gray-900">Total Contribution</p>
-                    <p className="text-xs text-gray-600">All-time records</p>
+                    <p className="text-sm font-medium text-gray-900">{t('clerk.totalContribution')}</p>
+                    <p className="text-xs text-gray-600">{t('clerk.allTimeRecords')}</p>
                   </div>
                 </div>
                 <span className="text-2xl font-bold text-teal-600">{stats?.myRecords || 0}</span>
@@ -403,8 +405,8 @@ const ClerkDashboard = () => {
                     <CalendarIcon className="h-6 w-6 text-blue-600" />
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-gray-900">This Week</p>
-                    <p className="text-xs text-gray-600">Last 7 days</p>
+                    <p className="text-sm font-medium text-gray-900">{t('clerk.thisWeek')}</p>
+                    <p className="text-xs text-gray-600">{t('clerk.last7Days')}</p>
                   </div>
                 </div>
                 <span className="text-2xl font-bold text-blue-600">{stats?.myRecords || 0}</span>
@@ -416,8 +418,8 @@ const ClerkDashboard = () => {
                     <SparklesIcon className="h-6 w-6 text-purple-600" />
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-gray-900">Quality Score</p>
-                    <p className="text-xs text-gray-600">Approval rate</p>
+                    <p className="text-sm font-medium text-gray-900">{t('clerk.qualityScore')}</p>
+                    <p className="text-xs text-gray-600">{t('clerk.approvalRate')}</p>
                   </div>
                 </div>
                 <span className="text-2xl font-bold text-purple-600">100%</span>
@@ -430,7 +432,7 @@ const ClerkDashboard = () => {
         <div className="bg-white rounded-2xl shadow-xl p-6">
           <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center">
             <EyeIcon className="h-7 w-7 mr-3 text-teal-600" />
-            Quick View - My Records
+            {t('clerk.quickView')}
           </h2>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <button
@@ -440,7 +442,7 @@ const ClerkDashboard = () => {
             >
               <CakeIcon className="h-10 w-10 mb-2" />
               <span className="text-base font-bold">{stats?.myBirths || 0}</span>
-              <span className="text-xs mt-1 opacity-75">Birth Records</span>
+              <span className="text-xs mt-1 opacity-75">{t('birth.birthRecords')}</span>
             </button>
             
             <button
@@ -450,7 +452,7 @@ const ClerkDashboard = () => {
             >
               <FaceFrownIcon className="h-10 w-10 mb-2" />
               <span className="text-base font-bold">{stats?.myDeaths || 0}</span>
-              <span className="text-xs mt-1 opacity-75">Death Records</span>
+              <span className="text-xs mt-1 opacity-75">{t('death.deathRecords')}</span>
             </button>
             
             <button
@@ -460,7 +462,7 @@ const ClerkDashboard = () => {
             >
               <HeartIcon className="h-10 w-10 mb-2" />
               <span className="text-base font-bold">{stats?.myMarriages || 0}</span>
-              <span className="text-xs mt-1 opacity-75">Marriage Records</span>
+              <span className="text-xs mt-1 opacity-75">{t('marriage.marriageRecords')}</span>
             </button>
             
             <button
@@ -470,7 +472,7 @@ const ClerkDashboard = () => {
             >
               <XCircleIconOutline className="h-10 w-10 mb-2" />
               <span className="text-base font-bold">{stats?.myDivorces || 0}</span>
-              <span className="text-xs mt-1 opacity-75">Divorce Records</span>
+              <span className="text-xs mt-1 opacity-75">{t('divorce.divorceRecords')}</span>
             </button>
           </div>
         </div>
@@ -479,38 +481,38 @@ const ClerkDashboard = () => {
         <div className="bg-white rounded-2xl shadow-xl p-6">
           <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center">
             <SparklesIcon className="h-7 w-7 mr-3 text-teal-600" />
-            Data Entry Tips & Best Practices
+            {t('clerk.dataEntryTips')}
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="flex items-start p-4 bg-blue-50 rounded-lg border border-blue-200">
               <CheckCircleIcon className="h-6 w-6 text-blue-600 mr-3 flex-shrink-0 mt-0.5" />
               <div>
-                <p className="text-sm font-semibold text-gray-900">Double-Check Information</p>
-                <p className="text-xs text-gray-600 mt-1">Verify all names, dates, and ID numbers before submitting</p>
+                <p className="text-sm font-semibold text-gray-900">{t('clerk.doubleCheckInfo')}</p>
+                <p className="text-xs text-gray-600 mt-1">{t('clerk.verifyAllInfo')}</p>
               </div>
             </div>
 
             <div className="flex items-start p-4 bg-green-50 rounded-lg border border-green-200">
               <CheckCircleIcon className="h-6 w-6 text-green-600 mr-3 flex-shrink-0 mt-0.5" />
               <div>
-                <p className="text-sm font-semibold text-gray-900">Use Proper Formatting</p>
-                <p className="text-xs text-gray-600 mt-1">Follow Ethiopian naming conventions and date formats</p>
+                <p className="text-sm font-semibold text-gray-900">{t('clerk.useProperFormatting')}</p>
+                <p className="text-xs text-gray-600 mt-1">{t('clerk.followConventions')}</p>
               </div>
             </div>
 
             <div className="flex items-start p-4 bg-purple-50 rounded-lg border border-purple-200">
               <CheckCircleIcon className="h-6 w-6 text-purple-600 mr-3 flex-shrink-0 mt-0.5" />
               <div>
-                <p className="text-sm font-semibold text-gray-900">Complete All Required Fields</p>
-                <p className="text-xs text-gray-600 mt-1">Ensure no mandatory information is missing</p>
+                <p className="text-sm font-semibold text-gray-900">{t('clerk.completeRequiredFields')}</p>
+                <p className="text-xs text-gray-600 mt-1">{t('clerk.ensureNoMissing')}</p>
               </div>
             </div>
 
             <div className="flex items-start p-4 bg-orange-50 rounded-lg border border-orange-200">
               <CheckCircleIcon className="h-6 w-6 text-orange-600 mr-3 flex-shrink-0 mt-0.5" />
               <div>
-                <p className="text-sm font-semibold text-gray-900">Save Drafts Regularly</p>
-                <p className="text-xs text-gray-600 mt-1">Don't lose your work - save progress frequently</p>
+                <p className="text-sm font-semibold text-gray-900">{t('clerk.saveDraftsRegularly')}</p>
+                <p className="text-xs text-gray-600 mt-1">{t('clerk.dontLoseWork')}</p>
               </div>
             </div>
           </div>
@@ -525,15 +527,13 @@ const ClerkDashboard = () => {
               </div>
             </div>
             <div className="ml-4">
-              <h3 className="text-lg font-bold text-gray-900 mb-2">Clerk Role - Data Entry Access</h3>
+              <h3 className="text-lg font-bold text-gray-900 mb-2">{t('clerk.clerkRole')}</h3>
               <p className="text-sm text-gray-700 leading-relaxed">
-                <strong className="text-teal-700">Your Permissions:</strong> You can create new vital records in draft status. 
-                All records you create will be submitted for approval by VMS Officers or Administrators. 
-                You can view and edit only the records you have created. You cannot approve, delete, or access user management features.
+                <strong className="text-teal-700">{t('clerk.yourPermissions')}:</strong> {t('clerk.permissionsText')}
               </p>
               <div className="mt-3 flex items-center text-xs text-gray-600">
                 <ClockIcon className="h-4 w-4 mr-1" />
-                Last updated: {new Date().toLocaleDateString()}
+                {t('clerk.lastUpdated')}: {new Date().toLocaleDateString()}
               </div>
             </div>
           </div>

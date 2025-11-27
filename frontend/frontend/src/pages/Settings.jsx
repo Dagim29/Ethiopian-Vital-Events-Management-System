@@ -1,12 +1,12 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { useTranslation } from 'react-i18next';
 import { 
   UserIcon, 
   BellIcon, 
   ShieldCheckIcon, 
   CogIcon,
   KeyIcon,
-  GlobeAltIcon,
   DocumentTextIcon,
   ChartBarIcon
 } from '@heroicons/react/24/outline';
@@ -14,11 +14,13 @@ import Card from '../components/common/Card';
 import Button from '../components/common/Button';
 import Input from '../components/common/Input';
 import ImageUpload from '../components/common/ImageUpload';
+import LanguageSelector from '../components/common/LanguageSelector';
 import { usersAPI } from '../services/api';
 import { toast } from 'react-toastify';
 
 const Settings = () => {
   const { user, updateUser } = useAuth();
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState('profile');
   const [loading, setLoading] = useState(false);
   
@@ -43,10 +45,10 @@ const Settings = () => {
   });
 
   const tabs = [
-    { id: 'profile', name: 'Profile', icon: UserIcon },
-    { id: 'security', name: 'Security', icon: ShieldCheckIcon },
-    { id: 'notifications', name: 'Notifications', icon: BellIcon },
-    { id: 'system', name: 'System', icon: CogIcon },
+    { id: 'profile', name: t('settings.profile'), icon: UserIcon },
+    { id: 'security', name: t('settings.security'), icon: ShieldCheckIcon },
+    { id: 'notifications', name: t('settings.notifications'), icon: BellIcon },
+    { id: 'system', name: t('settings.system'), icon: CogIcon },
   ];
 
   const handleProfileChange = (e) => {
@@ -73,17 +75,17 @@ const Settings = () => {
         profile_photo: profilePhotoPreview,
       };
       
-      await usersAPI.updateUser(user.user_id, updateData);
+      const response = await usersAPI.updateProfile(updateData);
       
-      // Update auth context
-      if (updateUser) {
-        updateUser({ ...user, ...updateData });
+      // Update auth context with the returned user data
+      if (updateUser && response.user) {
+        updateUser(response.user);
       }
       
-      toast.success('Profile updated successfully');
+      toast.success(t('messages.profileUpdated'));
     } catch (error) {
       console.error('Error updating profile:', error);
-      toast.error(error.message || 'Failed to update profile');
+      toast.error(error.message || t('messages.profileUpdateFailed'));
     } finally {
       setLoading(false);
     }
@@ -104,21 +106,21 @@ const Settings = () => {
     try {
       // Validate passwords
       if (passwordData.newPassword !== passwordData.confirmPassword) {
-        toast.error('New passwords do not match');
+        toast.error(t('messages.passwordMismatch'));
         setLoading(false);
         return;
       }
       
       if (passwordData.newPassword.length < 6) {
-        toast.error('Password must be at least 6 characters');
+        toast.error(t('settings.passwordMinLength'));
         setLoading(false);
         return;
       }
       
-      // TODO: Implement password change API
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Call password change API
+      await usersAPI.changePassword(passwordData);
       
-      toast.success('Password changed successfully');
+      toast.success(t('messages.passwordChanged'));
       
       // Reset form
       setPasswordData({
@@ -128,7 +130,7 @@ const Settings = () => {
       });
     } catch (error) {
       console.error('Error changing password:', error);
-      toast.error(error.message || 'Failed to change password');
+      toast.error(error.message || t('messages.passwordChangeFailed'));
     } finally {
       setLoading(false);
     }
@@ -137,8 +139,8 @@ const Settings = () => {
   const renderProfileTab = () => (
     <div className="space-y-6">
       <div>
-        <h3 className="text-lg font-medium text-gray-900">Personal Information</h3>
-        <p className="text-sm text-gray-500">Update your personal details and contact information.</p>
+        <h3 className="text-lg font-medium text-gray-900">{t('settings.personalInfo')}</h3>
+        <p className="text-sm text-gray-500">{t('settings.personalInfoDesc')}</p>
       </div>
       
       {/* Profile Photo Section */}
@@ -160,13 +162,12 @@ const Settings = () => {
         </div>
         <div className="flex-1">
           <ImageUpload
-            label="Profile Photo"
+            label={t('settings.profilePhoto')}
             value={profilePhotoPreview}
-            onChange={(file, preview) => {
-              setProfilePhoto(file);
+            onChange={(_file, preview) => {
               setProfilePhotoPreview(preview);
             }}
-            helperText="Upload your profile photo (PNG, JPG up to 5MB)"
+            helperText={t('settings.uploadPhoto')}
           />
         </div>
       </div>
@@ -174,43 +175,43 @@ const Settings = () => {
       <form onSubmit={handleSaveProfile} className="space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">{t('settings.fullName')}</label>
             <Input
               name="full_name"
               value={profileData.full_name}
               onChange={handleProfileChange}
-              placeholder="Enter your full name"
+              placeholder={t('settings.fullName')}
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">{t('common.email')}</label>
             <Input
               type="email"
               name="email"
               value={profileData.email}
               onChange={handleProfileChange}
-              placeholder="Enter your email"
+              placeholder={t('common.email')}
             />
           </div>
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">{t('settings.phone')}</label>
             <Input
               name="phone"
               value={profileData.phone}
               onChange={handleProfileChange}
-              placeholder="Enter your phone number"
+              placeholder={t('settings.phone')}
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Badge Number</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">{t('settings.badgeNumber')}</label>
             <Input
               name="badge_number"
               value={profileData.badge_number}
               onChange={handleProfileChange}
-              placeholder="Enter your badge number"
+              placeholder={t('settings.badgeNumber')}
               disabled
             />
           </div>
@@ -218,28 +219,28 @@ const Settings = () => {
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Department</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">{t('settings.department')}</label>
             <Input
               name="department"
               value={profileData.department}
               onChange={handleProfileChange}
-              placeholder="Enter your department"
+              placeholder={t('settings.department')}
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Office</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">{t('settings.office')}</label>
             <Input
               name="office_name"
               value={profileData.office_name}
               onChange={handleProfileChange}
-              placeholder="Enter your office name"
+              placeholder={t('settings.office')}
             />
           </div>
         </div>
         
         <div className="flex justify-end">
           <Button type="submit" loading={loading}>
-            Save Changes
+            {t('settings.saveChanges')}
           </Button>
         </div>
       </form>
@@ -249,51 +250,51 @@ const Settings = () => {
   const renderSecurityTab = () => (
     <div className="space-y-6">
       <div>
-        <h3 className="text-lg font-medium text-gray-900">Security Settings</h3>
-        <p className="text-sm text-gray-500">Manage your password and security preferences.</p>
+        <h3 className="text-lg font-medium text-gray-900">{t('settings.securitySettings')}</h3>
+        <p className="text-sm text-gray-500">{t('settings.securityDesc')}</p>
       </div>
       
       <form onSubmit={handleChangePassword} className="space-y-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Current Password</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">{t('settings.currentPassword')}</label>
           <Input
             type="password"
             name="currentPassword"
             value={passwordData.currentPassword}
             onChange={handlePasswordChange}
-            placeholder="Enter your current password"
+            placeholder={t('settings.currentPassword')}
             required
           />
         </div>
         
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">New Password</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">{t('settings.newPassword')}</label>
           <Input
             type="password"
             name="newPassword"
             value={passwordData.newPassword}
             onChange={handlePasswordChange}
-            placeholder="Enter your new password"
+            placeholder={t('settings.newPassword')}
             required
           />
-          <p className="mt-1 text-xs text-gray-500">Password must be at least 6 characters</p>
+          <p className="mt-1 text-xs text-gray-500">{t('settings.passwordMinLength')}</p>
         </div>
         
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Confirm New Password</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">{t('settings.confirmPassword')}</label>
           <Input
             type="password"
             name="confirmPassword"
             value={passwordData.confirmPassword}
             onChange={handlePasswordChange}
-            placeholder="Confirm your new password"
+            placeholder={t('settings.confirmPassword')}
             required
           />
         </div>
         
         <div className="flex justify-end">
           <Button type="submit" loading={loading}>
-            Change Password
+            {t('settings.changePassword')}
           </Button>
         </div>
       </form>
@@ -303,31 +304,31 @@ const Settings = () => {
   const renderNotificationsTab = () => (
     <div className="space-y-6">
       <div>
-        <h3 className="text-lg font-medium text-gray-900">Notification Preferences</h3>
-        <p className="text-sm text-gray-500">Choose how you want to be notified about system events.</p>
+        <h3 className="text-lg font-medium text-gray-900">{t('settings.notificationPreferences')}</h3>
+        <p className="text-sm text-gray-500">{t('settings.notificationDesc')}</p>
       </div>
       
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <div>
-            <h4 className="text-sm font-medium text-gray-900">Email Notifications</h4>
-            <p className="text-sm text-gray-500">Receive notifications via email</p>
+            <h4 className="text-sm font-medium text-gray-900">{t('settings.emailNotifications')}</h4>
+            <p className="text-sm text-gray-500">{t('settings.emailNotificationsDesc')}</p>
           </div>
           <input type="checkbox" defaultChecked className="h-4 w-4 text-blue-600" />
         </div>
         
         <div className="flex items-center justify-between">
           <div>
-            <h4 className="text-sm font-medium text-gray-900">SMS Notifications</h4>
-            <p className="text-sm text-gray-500">Receive notifications via SMS</p>
+            <h4 className="text-sm font-medium text-gray-900">{t('settings.smsNotifications')}</h4>
+            <p className="text-sm text-gray-500">{t('settings.smsNotificationsDesc')}</p>
           </div>
           <input type="checkbox" className="h-4 w-4 text-blue-600" />
         </div>
         
         <div className="flex items-center justify-between">
           <div>
-            <h4 className="text-sm font-medium text-gray-900">System Alerts</h4>
-            <p className="text-sm text-gray-500">Receive alerts for system updates</p>
+            <h4 className="text-sm font-medium text-gray-900">{t('settings.systemAlerts')}</h4>
+            <p className="text-sm text-gray-500">{t('settings.systemAlertsDesc')}</p>
           </div>
           <input type="checkbox" defaultChecked className="h-4 w-4 text-blue-600" />
         </div>
@@ -338,27 +339,23 @@ const Settings = () => {
   const renderSystemTab = () => (
     <div className="space-y-6">
       <div>
-        <h3 className="text-lg font-medium text-gray-900">System Settings</h3>
-        <p className="text-sm text-gray-500">Configure system-wide settings and preferences.</p>
+        <h3 className="text-lg font-medium text-gray-900">{t('settings.systemSettings')}</h3>
+        <p className="text-sm text-gray-500">{t('settings.systemDesc')}</p>
+      </div>
+      
+      <div className="mb-6">
+        <label className="block text-sm font-medium text-gray-700 mb-2">{t('settings.language')}</label>
+        <LanguageSelector />
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Card className="p-4">
-          <div className="flex items-center">
-            <GlobeAltIcon className="h-8 w-8 text-blue-500 mr-3" />
-            <div>
-              <h4 className="text-sm font-medium text-gray-900">Language</h4>
-              <p className="text-sm text-gray-500">English</p>
-            </div>
-          </div>
-        </Card>
         
         <Card className="p-4">
           <div className="flex items-center">
             <DocumentTextIcon className="h-8 w-8 text-green-500 mr-3" />
             <div>
-              <h4 className="text-sm font-medium text-gray-900">Reports</h4>
-              <p className="text-sm text-gray-500">Generate system reports</p>
+              <h4 className="text-sm font-medium text-gray-900">{t('settings.reports')}</h4>
+              <p className="text-sm text-gray-500">{t('settings.reportsDesc')}</p>
             </div>
           </div>
         </Card>
@@ -367,8 +364,8 @@ const Settings = () => {
           <div className="flex items-center">
             <ChartBarIcon className="h-8 w-8 text-purple-500 mr-3" />
             <div>
-              <h4 className="text-sm font-medium text-gray-900">Analytics</h4>
-              <p className="text-sm text-gray-500">View system analytics</p>
+              <h4 className="text-sm font-medium text-gray-900">{t('settings.analytics')}</h4>
+              <p className="text-sm text-gray-500">{t('settings.analyticsDesc')}</p>
             </div>
           </div>
         </Card>
@@ -377,8 +374,8 @@ const Settings = () => {
           <div className="flex items-center">
             <KeyIcon className="h-8 w-8 text-red-500 mr-3" />
             <div>
-              <h4 className="text-sm font-medium text-gray-900">API Keys</h4>
-              <p className="text-sm text-gray-500">Manage API access</p>
+              <h4 className="text-sm font-medium text-gray-900">{t('settings.apiKeys')}</h4>
+              <p className="text-sm text-gray-500">{t('settings.apiKeysDesc')}</p>
             </div>
           </div>
         </Card>
@@ -407,9 +404,9 @@ const Settings = () => {
       <div className="bg-white shadow-sm border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Settings</h1>
+            <h1 className="text-3xl font-bold text-gray-900">{t('settings.title')}</h1>
             <p className="text-gray-600 mt-1">
-              Manage your account settings and preferences
+              {t('settings.subtitle')}
             </p>
           </div>
         </div>

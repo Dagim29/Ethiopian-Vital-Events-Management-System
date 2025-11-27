@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { auditLogsAPI } from '../../services/api';
 import { ClockIcon, FunnelIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
 import { format } from 'date-fns';
 
 const AuditLogs = () => {
+  const location = useLocation();
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({
@@ -15,6 +17,17 @@ const AuditLogs = () => {
     limit: 50
   });
   const [total, setTotal] = useState(0);
+
+  // Apply filters from navigation state (from dashboard)
+  useEffect(() => {
+    if (location.state?.filterByDate && location.state?.startDate) {
+      setFilters(prev => ({
+        ...prev,
+        start_date: location.state.startDate,
+        end_date: '' // Leave end date empty to show from start date onwards
+      }));
+    }
+  }, [location.state]);
 
   useEffect(() => {
     fetchLogs();

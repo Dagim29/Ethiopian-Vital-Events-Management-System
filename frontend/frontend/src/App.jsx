@@ -21,7 +21,9 @@ import AuditLogs from './pages/admin/AuditLogs';
 import StatisticianAnalytics from './pages/statistician/Analytics';
 import StatisticianReports from './pages/statistician/Reports';
 import StatisticianMyReports from './pages/statistician/MyReports';
+import VerifyCertificate from './pages/VerifyCertificate';
 import Layout from './components/layout/Layout';
+import './i18n/config'; // Initialize i18n
 import './index.css';
 
 // Create a client for react-query
@@ -61,6 +63,7 @@ const AppRoutes = () => {
       <Route path="/" element={<Landing />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
+      <Route path="/verify-certificate" element={<VerifyCertificate />} />
       <Route
         path="/dashboard"
         element={

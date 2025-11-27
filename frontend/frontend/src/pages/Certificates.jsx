@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { 
   DocumentCheckIcon, 
@@ -6,20 +6,19 @@ import {
   PrinterIcon,
   ArrowDownTrayIcon,
   EyeIcon,
-  FunnelIcon
 } from '@heroicons/react/24/outline';
 import { birthRecordsAPI, deathRecordsAPI, marriageRecordsAPI, divorceRecordsAPI } from '../services/api';
 import Card from '../components/common/Card';
 import Button from '../components/common/Button';
 import { useNavigate } from 'react-router-dom';
-import { toast } from 'react-toastify';
+import { useTranslation } from 'react-i18next';
 
 const Certificates = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [selectedType, setSelectedType] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedRecord, setSelectedRecord] = useState(null);
-  const [downloadingId, setDownloadingId] = useState(null);
 
   // Fetch all records
   const { data: birthRecords, isLoading: birthLoading } = useQuery({
@@ -141,78 +140,10 @@ const Certificates = () => {
     setTimeout(() => window.print(), 500);
   };
 
-  const handleDownloadCertificate = async (record) => {
+  const handleDownloadCertificate = (record) => {
     console.log('Downloading certificate for record:', record);
-    setDownloadingId(record.recordId);
-    
-    try {
-      // Dynamic import for better code splitting
-      const domtoimage = await import('dom-to-image-more');
-      const jsPDF = (await import('jspdf')).default;
-      
-      // Navigate to certificate view to render it
-      navigate(`/certificates/${record.type}/${record.recordId}`);
-      
-      // Wait for page to load and render
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      // Find the certificate content
-      const element = document.querySelector('.certificate-content') || document.body;
-      
-      // Get element dimensions
-      const rect = element.getBoundingClientRect();
-      const width = rect.width;
-      const height = rect.height;
-      
-      // Generate high-quality PNG from DOM
-      const dataUrl = await domtoimage.toPng(element, {
-        quality: 1.0,
-        bgcolor: '#ffffff',
-        width: width * 3, // 3x scale for better quality
-        height: height * 3,
-        style: {
-          transform: 'scale(3)',
-          transformOrigin: 'top left',
-          width: width + 'px',
-          height: height + 'px'
-        },
-        cacheBust: true,
-        imagePlaceholder: undefined
-      });
-      
-      // Create image to get dimensions
-      const img = new Image();
-      img.src = dataUrl;
-      await new Promise((resolve, reject) => {
-        img.onload = resolve;
-        img.onerror = reject;
-      });
-      
-      // Create PDF with proper dimensions
-      const pdf = new jsPDF({
-        orientation: height > width ? 'portrait' : 'landscape',
-        unit: 'px',
-        format: [width, height],
-        compress: true
-      });
-      
-      // Add image to PDF (full page)
-      pdf.addImage(dataUrl, 'PNG', 0, 0, width, height, undefined, 'FAST');
-      
-      // Generate filename
-      const filename = `${record.type.charAt(0).toUpperCase() + record.type.slice(1)}_Certificate_${record.certificate_number || record.recordId}.pdf`;
-      pdf.save(filename);
-      
-      toast.success('Certificate downloaded successfully');
-      
-      // Navigate back after download
-      setTimeout(() => navigate('/certificates'), 500);
-    } catch (error) {
-      console.error('Error downloading certificate:', error);
-      toast.error('Failed to download certificate. Please try again.');
-    } finally {
-      setDownloadingId(null);
-    }
+    // Just navigate to view page - user can download from there
+    navigate(`/certificates/${record.type}/${record.recordId}`);
   };
 
   const getTypeColor = (type) => {
@@ -237,13 +168,13 @@ const Certificates = () => {
           <div>
             <h1 className="text-3xl font-bold flex items-center">
               <DocumentCheckIcon className="h-8 w-8 mr-3" />
-              Certificates
+              {t('certificates.title')}
             </h1>
-            <p className="mt-2 text-green-100">Generate, view, and download official vital records certificates</p>
+            <p className="mt-2 text-green-100">{t('certificates.description')}</p>
           </div>
           <div className="hidden md:block">
             <div className="bg-white/20 backdrop-blur-sm rounded-lg p-4">
-              <p className="text-sm font-semibold">Total Certificates</p>
+              <p className="text-sm font-semibold">{t('certificates.totalCertificates')}</p>
               <p className="text-3xl font-bold">{allRecords.length}</p>
             </div>
           </div>
@@ -259,7 +190,7 @@ const Certificates = () => {
               <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
               <input
                 type="text"
-                placeholder="Search by certificate number or name..."
+                placeholder={t('certificates.searchPlaceholder')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
@@ -277,7 +208,7 @@ const Certificates = () => {
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}
             >
-              All
+              {t('certificates.all')}
             </button>
             <button
               onClick={() => setSelectedType('birth')}
@@ -287,7 +218,7 @@ const Certificates = () => {
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}
             >
-              Birth
+              {t('certificates.birth')}
             </button>
             <button
               onClick={() => setSelectedType('death')}
@@ -297,7 +228,7 @@ const Certificates = () => {
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}
             >
-              Death
+              {t('certificates.death')}
             </button>
             <button
               onClick={() => setSelectedType('marriage')}
@@ -307,7 +238,7 @@ const Certificates = () => {
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}
             >
-              Marriage
+              {t('certificates.marriage')}
             </button>
             <button
               onClick={() => setSelectedType('divorce')}
@@ -317,7 +248,7 @@ const Certificates = () => {
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}
             >
-              Divorce
+              {t('certificates.divorce')}
             </button>
           </div>
         </div>
@@ -325,17 +256,18 @@ const Certificates = () => {
 
       {/* Certificates List */}
       {isLoading ? (
-        <div className="flex items-center justify-center h-64">
+        <div className="flex flex-col items-center justify-center h-64">
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-600"></div>
+          <p className="mt-4 text-gray-600">{t('certificates.loading')}</p>
         </div>
       ) : filteredRecords.length === 0 ? (
         <Card className="p-12 text-center">
           <DocumentCheckIcon className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">No Certificates Found</h3>
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">{t('certificates.noCertificatesFound')}</h3>
           <p className="text-gray-500">
             {searchQuery || selectedType !== 'all'
-              ? 'Try adjusting your filters or search terms'
-              : 'No records available yet. Create some vital records first.'}
+              ? t('certificates.tryAdjustingFilters')
+              : t('certificates.noRecordsAvailable')}
           </p>
         </Card>
       ) : (
@@ -357,10 +289,10 @@ const Certificates = () => {
                         </span>
                       </div>
                       <p className="text-sm text-gray-600">
-                        Certificate No: <span className="font-mono font-semibold">{record.certificate_number}</span>
+                        {t('certificates.certificateNo')}: <span className="font-mono font-semibold">{record.certificate_number}</span>
                       </p>
                       <p className="text-xs text-gray-500 mt-1">
-                        Issued: {record.created_at ? new Date(record.created_at).toLocaleDateString() : 'N/A'}
+                        {t('certificates.issued')}: {record.created_at ? new Date(record.created_at).toLocaleDateString() : 'N/A'}
                       </p>
                     </div>
                   </div>
@@ -372,34 +304,21 @@ const Certificates = () => {
                       className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg"
                     >
                       <EyeIcon className="h-4 w-4" />
-                      <span className="hidden sm:inline">View</span>
+                      <span className="hidden sm:inline">{t('certificates.view')}</span>
                     </Button>
                     <Button
                       onClick={() => handlePrintCertificate(record)}
                       className="flex items-center gap-2 bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg"
                     >
                       <PrinterIcon className="h-4 w-4" />
-                      <span className="hidden sm:inline">Print</span>
+                      <span className="hidden sm:inline">{t('certificates.print')}</span>
                     </Button>
                     <Button
                       onClick={() => handleDownloadCertificate(record)}
-                      disabled={downloadingId === record.recordId}
-                      className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg"
                     >
-                      {downloadingId === record.recordId ? (
-                        <>
-                          <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                          </svg>
-                          <span className="hidden sm:inline">Downloading...</span>
-                        </>
-                      ) : (
-                        <>
-                          <ArrowDownTrayIcon className="h-4 w-4" />
-                          <span className="hidden sm:inline">Download</span>
-                        </>
-                      )}
+                      <ArrowDownTrayIcon className="h-4 w-4" />
+                      <span className="hidden sm:inline">{t('certificates.download')}</span>
                     </Button>
                   </div>
                 </div>
@@ -417,8 +336,7 @@ const Certificates = () => {
           </div>
           <div className="ml-3">
             <p className="text-sm text-blue-700">
-              <strong>Certificate Information:</strong> All registered vital records are available for certificate generation. 
-              Certificates are formatted according to Ethiopian vital records standards and include security features.
+              <strong>{t('certificates.certificateInformation')}:</strong> {t('certificates.certificateInfoText')}
             </p>
           </div>
         </div>

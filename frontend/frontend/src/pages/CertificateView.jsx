@@ -1,15 +1,19 @@
-import React, { useRef } from 'react';
-import { useParams } from 'react-router-dom';
+import React, { useRef, useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { birthRecordsAPI, deathRecordsAPI, marriageRecordsAPI, divorceRecordsAPI } from '../services/api';
 import { PrinterIcon, ArrowDownTrayIcon, ArrowLeftIcon } from '@heroicons/react/24/outline';
-import { useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify';
 import ethiopianFlag from '../assets/ethiopia-flag.png';
+import { downloadCertificate, DOWNLOAD_METHODS } from '../utils/certificateDownload';
+import { generateCertificateQRCode } from '../utils/qrCodeGenerator';
 
 const CertificateView = () => {
   const { type, id } = useParams();
   const navigate = useNavigate();
   const certificateRef = useRef();
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [qrCodeDataUrl, setQrCodeDataUrl] = useState(null);
 
   // Fetch record based on type
   const { data: record, isLoading, error } = useQuery({
@@ -58,14 +62,85 @@ const CertificateView = () => {
   console.log('Is loading:', isLoading);
   console.log('Error:', error);
 
+  // Generate QR code when record is loaded
+  useEffect(() => {
+    const generateQR = async () => {
+      if (record && record.certificate_number) {
+        try {
+          const qrData = await generateCertificateQRCode({
+            certificateNumber: record.certificate_number,
+            recordType: type,
+            recordId: record._id || record.id,
+            issuedDate: record.issued_date || record.created_at || new Date().toISOString()
+          });
+          setQrCodeDataUrl(qrData);
+          console.log('QR code generated successfully');
+        } catch (error) {
+          console.error('Failed to generate QR code:', error);
+        }
+      }
+    };
+
+    generateQR();
+  }, [record, type]);
+
   const handlePrint = () => {
     window.print();
   };
 
-  const handleDownload = () => {
-    // Use browser's print dialog - gives EXACT copy of what you see
-    // User can save as PDF from the print dialog
-    window.print();
+  const handleDownload = async () => {
+    if (!record) {
+      toast.error('Certificate not ready for download');
+      return;
+    }
+
+    if (!certificateRef.current) {
+      toast.error('Certificate element not found');
+      return;
+    }
+
+    // Wait for QR code to be fully rendered
+    if (!qrCodeDataUrl) {
+      toast.warning('QR code is still loading. Please wait a moment...');
+      return;
+    }
+
+    setIsDownloading(true);
+    
+    try {
+      toast.info('Generating PDF with QR code...', { autoClose: 2000 });
+      
+      // Use html2canvas method to capture the certificate with QR code
+      const result = await downloadCertificate(
+        certificateRef.current,
+        record,
+        type,
+        DOWNLOAD_METHODS.HTML2CANVAS
+      );
+
+      if (result.success) {
+        toast.success('Certificate downloaded successfully!');
+      } else {
+        toast.error(result.message || 'Failed to download certificate');
+      }
+    } catch (error) {
+      console.error('Download error:', error);
+      
+      // Offer print as fallback
+      const usePrint = window.confirm(
+        'PDF generation failed. Would you like to use Print to PDF instead?\n\n' +
+        'Click OK to open print dialog, then select "Save as PDF".'
+      );
+      
+      if (usePrint) {
+        toast.info('Opening print dialog. Select "Save as PDF" to download.');
+        setTimeout(() => window.print(), 300);
+      } else {
+        toast.error('Download cancelled. Please try again or use the Print button.');
+      }
+    } finally {
+      setIsDownloading(false);
+    }
   };
 
   if (isLoading) {
@@ -117,7 +192,7 @@ const CertificateView = () => {
         <div className="bg-white rounded-lg shadow-sm p-4 flex items-center justify-between">
           <button
             onClick={() => navigate('/certificates')}
-            className="flex items-center gap-2 text-gray-600 hover:text-gray-900"
+            className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
           >
             <ArrowLeftIcon className="h-5 w-5" />
             Back to Certificates
@@ -125,17 +200,30 @@ const CertificateView = () => {
           <div className="flex gap-3">
             <button
               onClick={handlePrint}
-              className="flex items-center gap-2 bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg transition-colors"
+              className="flex items-center gap-2 bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg transition-colors shadow-sm hover:shadow"
             >
               <PrinterIcon className="h-5 w-5" />
-              Print
+              <span className="hidden sm:inline">Print</span>
             </button>
             <button
               onClick={handleDownload}
-              className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors"
+              disabled={isDownloading}
+              className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors shadow-sm hover:shadow disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <ArrowDownTrayIcon className="h-5 w-5" />
-              Download PDF
+              {isDownloading ? (
+                <>
+                  <svg className="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                  </svg>
+                  <span className="hidden sm:inline">Downloading...</span>
+                </>
+              ) : (
+                <>
+                  <ArrowDownTrayIcon className="h-5 w-5" />
+                  <span className="hidden sm:inline">Download PDF</span>
+                </>
+              )}
             </button>
           </div>
         </div>
@@ -144,10 +232,10 @@ const CertificateView = () => {
       {/* Certificate */}
       <div className="max-w-5xl mx-auto px-4">
         <div className="bg-white shadow-2xl certificate-content" ref={certificateRef}>
-          {type === 'birth' && <BirthCertificate record={record} />}
-          {type === 'death' && <DeathCertificate record={record} />}
-          {type === 'marriage' && <MarriageCertificate record={record} />}
-          {type === 'divorce' && <DivorceCertificate record={record} />}
+          {type === 'birth' && <BirthCertificate record={record} qrCodeDataUrl={qrCodeDataUrl} />}
+          {type === 'death' && <DeathCertificate record={record} qrCodeDataUrl={qrCodeDataUrl} />}
+          {type === 'marriage' && <MarriageCertificate record={record} qrCodeDataUrl={qrCodeDataUrl} />}
+          {type === 'divorce' && <DivorceCertificate record={record} qrCodeDataUrl={qrCodeDataUrl} />}
         </div>
       </div>
     </div>
@@ -155,7 +243,7 @@ const CertificateView = () => {
 };
 
 // Birth Certificate Template (Clean Ethiopian Design)
-const BirthCertificate = ({ record }) => {
+const BirthCertificate = ({ record, qrCodeDataUrl }) => {
   return (
     <div className="p-12 bg-white" style={{ fontFamily: 'Times New Roman, serif' }}>
       <div className="border-8 border-double p-8" style={{ borderColor: '#009639' }}>
@@ -301,12 +389,23 @@ const BirthCertificate = ({ record }) => {
 
           {/* Signature Section */}
           <div className="mt-12 pt-8 border-t-4" style={{ borderColor: '#FEDD00' }}>
-            <div className="grid grid-cols-2 gap-8">
+            <div className="grid grid-cols-3 gap-8">
               <div className="text-center">
                 <div className="border-t-2 border-gray-800 pt-2 mt-16">
                   <p className="font-semibold">Registrar's Signature</p>
                   <p className="text-sm text-gray-600">የምዝገባ ሰራተኛ ፊርማ</p>
                 </div>
+              </div>
+              <div className="text-center">
+                <div className="qr-code-container mx-auto" style={{ width: '120px', height: '120px', border: '2px solid #009639', padding: '8px', backgroundColor: '#fff' }}>
+                  {qrCodeDataUrl ? (
+                    <img src={qrCodeDataUrl} alt="Certificate QR Code" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                  ) : (
+                    <div className="flex items-center justify-center h-full text-xs text-gray-400">Loading QR...</div>
+                  )}
+                </div>
+                <p className="text-xs text-center text-gray-600 mt-2 font-semibold">Scan to Verify</p>
+                <p className="text-xs text-center text-gray-500">ለማረጋገጥ ይቃኙ</p>
               </div>
               <div className="text-center">
                 <div className="border-t-2 border-gray-800 pt-2 mt-16">
@@ -321,7 +420,7 @@ const BirthCertificate = ({ record }) => {
         {/* Footer */}
         <div className="mt-8 pt-4 border-t-2 border-gray-300 text-center text-sm text-gray-600">
           <p>This certificate is issued in accordance with Ethiopian Vital Events Registration and National Identity Card Proclamation</p>
-          <p className="mt-1">ይህ የምስክር ወረቀት በኢትዮጵያ የህይወት ክስተቶች ምዝገባ እና የመታወቂያ ካርድ አዋጅ መሠረት የተሰጠ ነው</p>
+          <p className="mt-1">ይህ የምስክር ወረቀት በኢትዮጵያ የህይወት ክስተቶች ምዝገባ እና የመታወቂያ ካርድ አዋጅ መሠረት የተሰጠ ነ��</p>
         </div>
       </div>
     </div>
@@ -329,7 +428,7 @@ const BirthCertificate = ({ record }) => {
 };
 
 // Death Certificate Template
-const DeathCertificate = ({ record }) => {
+const DeathCertificate = ({ record, qrCodeDataUrl }) => {
   return (
     <div className="p-12 bg-white" style={{ fontFamily: 'Times New Roman, serif' }}>
       <div className="border-8 border-double p-8" style={{ borderColor: '#DA121A' }}>
@@ -414,15 +513,28 @@ const DeathCertificate = ({ record }) => {
 
           {/* Signature Section */}
           <div className="mt-12 pt-8 border-t-4" style={{ borderColor: '#FEDD00' }}>
-            <div className="grid grid-cols-2 gap-8">
+            <div className="grid grid-cols-3 gap-8">
               <div className="text-center">
                 <div className="border-t-2 border-gray-800 pt-2 mt-16">
                   <p className="font-semibold">Registrar's Signature</p>
+                  <p className="text-sm text-gray-600">የምዝገባ ሰራተኛ ፊርማ</p>
                 </div>
+              </div>
+              <div className="text-center">
+                <div className="qr-code-container mx-auto" style={{ width: '120px', height: '120px', border: '2px solid #DA121A', padding: '8px', backgroundColor: '#fff' }}>
+                  {qrCodeDataUrl ? (
+                    <img src={qrCodeDataUrl} alt="Certificate QR Code" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                  ) : (
+                    <div className="flex items-center justify-center h-full text-xs text-gray-400">Loading QR...</div>
+                  )}
+                </div>
+                <p className="text-xs text-center text-gray-600 mt-2 font-semibold">Scan to Verify</p>
+                <p className="text-xs text-center text-gray-500">ለማረጋገጥ ይቃኙ</p>
               </div>
               <div className="text-center">
                 <div className="border-t-2 border-gray-800 pt-2 mt-16">
                   <p className="font-semibold">Official Stamp</p>
+                  <p className="text-sm text-gray-600">ማህተም</p>
                 </div>
               </div>
             </div>
@@ -431,6 +543,7 @@ const DeathCertificate = ({ record }) => {
 
         <div className="mt-8 pt-4 border-t-2 border-gray-300 text-center text-sm text-gray-600">
           <p>This certificate is issued in accordance with Ethiopian Vital Events Registration and National Identity Card Proclamation</p>
+          <p className="mt-1">ይህ የምስክር ወረቀት በኢትዮጵያ የህይወት ክስተቶች ምዝገባ እና የመታወቂያ ካርድ አዋጅ መሠረት የተሰጠ ነው</p>
         </div>
       </div>
     </div>
@@ -438,7 +551,7 @@ const DeathCertificate = ({ record }) => {
 };
 
 // Marriage Certificate Template
-const MarriageCertificate = ({ record }) => {
+const MarriageCertificate = ({ record, qrCodeDataUrl }) => {
   return (
     <div className="p-12 bg-white" style={{ fontFamily: 'Times New Roman, serif' }}>
       <div className="border-8 border-double p-8" style={{ borderColor: '#E91E63' }}>
@@ -601,15 +714,28 @@ const MarriageCertificate = ({ record }) => {
 
           {/* Signature Section */}
           <div className="mt-12 pt-8 border-t-4" style={{ borderColor: '#FEDD00' }}>
-            <div className="grid grid-cols-2 gap-8">
+            <div className="grid grid-cols-3 gap-8">
               <div className="text-center">
                 <div className="border-t-2 border-gray-800 pt-2 mt-16">
                   <p className="font-semibold">Registrar's Signature</p>
+                  <p className="text-sm text-gray-600">የምዝገባ ሰራተኛ ፊርማ</p>
                 </div>
+              </div>
+              <div className="text-center">
+                <div className="qr-code-container mx-auto" style={{ width: '120px', height: '120px', border: '2px solid #E91E63', padding: '8px', backgroundColor: '#fff' }}>
+                  {qrCodeDataUrl ? (
+                    <img src={qrCodeDataUrl} alt="Certificate QR Code" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                  ) : (
+                    <div className="flex items-center justify-center h-full text-xs text-gray-400">Loading QR...</div>
+                  )}
+                </div>
+                <p className="text-xs text-center text-gray-600 mt-2 font-semibold">Scan to Verify</p>
+                <p className="text-xs text-center text-gray-500">ለማረጋገጥ ይቃኙ</p>
               </div>
               <div className="text-center">
                 <div className="border-t-2 border-gray-800 pt-2 mt-16">
                   <p className="font-semibold">Official Stamp</p>
+                  <p className="text-sm text-gray-600">ማህተም</p>
                 </div>
               </div>
             </div>
@@ -618,6 +744,7 @@ const MarriageCertificate = ({ record }) => {
 
         <div className="mt-8 pt-4 border-t-2 border-gray-300 text-center text-sm text-gray-600">
           <p>This certificate is issued in accordance with Ethiopian Family Code</p>
+          <p className="mt-1">ይህ የምስክር ወረቀት በኢትዮጵያ የቤተሰብ ህግ መሠረት የተሰጠ ነው</p>
         </div>
       </div>
     </div>
@@ -625,7 +752,7 @@ const MarriageCertificate = ({ record }) => {
 };
 
 // Divorce Certificate Template
-const DivorceCertificate = ({ record }) => {
+const DivorceCertificate = ({ record, qrCodeDataUrl }) => {
   return (
     <div className="p-12 bg-white" style={{ fontFamily: 'Times New Roman, serif' }}>
       <div className="border-8 border-double p-8" style={{ borderColor: '#FF9800' }}>
@@ -796,15 +923,28 @@ const DivorceCertificate = ({ record }) => {
 
           {/* Signature Section */}
           <div className="mt-12 pt-8 border-t-4" style={{ borderColor: '#FEDD00' }}>
-            <div className="grid grid-cols-2 gap-8">
+            <div className="grid grid-cols-3 gap-8">
               <div className="text-center">
                 <div className="border-t-2 border-gray-800 pt-2 mt-16">
                   <p className="font-semibold">Registrar's Signature</p>
+                  <p className="text-sm text-gray-600">የምዝገባ ሰራተኛ ፊርማ</p>
                 </div>
+              </div>
+              <div className="text-center">
+                <div className="qr-code-container mx-auto" style={{ width: '120px', height: '120px', border: '2px solid #FF9800', padding: '8px', backgroundColor: '#fff' }}>
+                  {qrCodeDataUrl ? (
+                    <img src={qrCodeDataUrl} alt="Certificate QR Code" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                  ) : (
+                    <div className="flex items-center justify-center h-full text-xs text-gray-400">Loading QR...</div>
+                  )}
+                </div>
+                <p className="text-xs text-center text-gray-600 mt-2 font-semibold">Scan to Verify</p>
+                <p className="text-xs text-center text-gray-500">ለማረጋገጥ ይቃኙ</p>
               </div>
               <div className="text-center">
                 <div className="border-t-2 border-gray-800 pt-2 mt-16">
                   <p className="font-semibold">Official Stamp</p>
+                  <p className="text-sm text-gray-600">ማህተም</p>
                 </div>
               </div>
             </div>
@@ -813,6 +953,7 @@ const DivorceCertificate = ({ record }) => {
 
         <div className="mt-8 pt-4 border-t-2 border-gray-300 text-center text-sm text-gray-600">
           <p>This certificate is issued in accordance with Ethiopian Family Code</p>
+          <p className="mt-1">ይህ የምስክር ወረቀት በኢትዮጵያ የቤተሰብ ህግ መሠረት የተሰጠ ነው</p>
         </div>
       </div>
     </div>

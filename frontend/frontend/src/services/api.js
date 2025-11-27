@@ -324,6 +324,18 @@ export const usersAPI = {
     const response = await api.patch(`/users/${userId}/status`, { status });
     return response.data;
   },
+  
+  // Update own profile (any authenticated user)
+  updateProfile: async (profileData) => {
+    const response = await api.put('/users/profile', profileData);
+    return response.data;
+  },
+  
+  // Change own password (any authenticated user)
+  changePassword: async (passwordData) => {
+    const response = await api.post('/users/change-password', passwordData);
+    return response.data;
+  },
 };
 
 // Birth Records API
